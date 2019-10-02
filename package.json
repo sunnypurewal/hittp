@@ -1,0 +1,15 @@
+{
+  "name": "hittp",
+  "version": "0.1.0",
+  "description": "Node.js HTTP request library with caching and queueing. Only supports GET.",
+  "keywords": ["http", "get", "stream", "request"],
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Sunny Purewal",
+  "license": "ISC",
+  "dependencies": {
+    "future": "^2.3.1"
+  }
+}
