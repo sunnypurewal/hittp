@@ -4,8 +4,9 @@ const fs = require("fs")
 const cachepath = require("./cachepath")
 const cachestream = require("./cachestream")
 
-const getstream = async (url) => {
+const getstream = (url) => {
   return new Promise((resolve, _) => {
+    if (!cachepath.CACHE_PATH) resolve(null)
     // console.log("Open getstream")
     const filepath = cachepath.getReadablePath(url)
     const stream = fs.createReadStream(filepath, {autoDestroy: true})

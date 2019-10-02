@@ -53,12 +53,6 @@ const enqueue = (obj) => {
   count += 1
   queue.set(url.host, {count, lastdq})
   emitter.emit("enqueued", obj)
-  let c = 0
-  queue.forEach((value, key, map) => {
-    c += value.count
-  })
-  // console.log("Queue has values: ", c)
-  // console.log("queue has", queue.size, "hosts")
 }
 
 const dequeue = (obj) => {

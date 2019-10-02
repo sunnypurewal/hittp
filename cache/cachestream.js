@@ -9,12 +9,9 @@ class CacheStream extends stream.Duplex {
   constructor(url, options) {
     super(options)
     this.url = url
-    this.filehandle = null
     this.fd = null
     this.filepath = null
     this.readOffset = 0
-    this.creating = false
-    this.queue = []
     this.future = null
   }
 
@@ -27,19 +24,6 @@ class CacheStream extends stream.Duplex {
       fs.open(filepath, "w+", (err, fd) => {
         this.fd = fd
         this.future.deliver(null, fd)
-      })
-    })
-    return this.future
-  }
-
-  getFilehandle() {
-    if (!this.future) this.future = Future.create(this)
-    else return this.future
-    cachepath.getWritablePath(this.url).then((filepath) => {
-      this.filepath = filepath
-      fspromises.open(filepath, "w+").then((handle) => {
-        this.filehandle = handle
-        this.future.deliver(null, handle)
       })
     })
     return this.future
@@ -65,7 +49,6 @@ class CacheStream extends stream.Duplex {
     this.getFileDescriptor().whenever((err, fd) => {
       fs.stat(this.filepath, (err, stats) => {
         const size = Math.max(0, stats.size - this.readOffset)
-        const buffer = Buffer.allocUnsafe(size)
         fs.appendFile(this.fd, chunk, {encoding}, (err) => {
           callback(err)
         })
@@ -91,13 +74,6 @@ class CacheStream extends stream.Duplex {
         })
       })
     })
-  }
-
-  _destroy(err, callback) {
-    if (err) console.error("Destroying cachestream due to error", err)
-    else {
-      callback()
-    }
   }
 }
 

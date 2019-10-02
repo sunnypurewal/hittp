@@ -10,8 +10,6 @@ const errors = require("./errors")
 const HTTPError = errors.HTTPError
 const TIMEOUT_MS = 3000
 
-cache.setPath("./.cache")
-
 queue.on("dequeue", (obj) => {
   getstream(obj.url, {resolve:obj.resolve,reject:obj.reject})
 })
@@ -32,11 +30,12 @@ const get = (url) => {
   })
 }
 
-const stream = async (url) => {
+const stream = (url) => {
   return new Promise((resolve, reject) => {
     if (typeof(url) === "string") url = urlparse.parse(url)
     cache.getstream(url).then((cached) => {
       if (cached) {
+        console.log("http.cached", url.href)
         resolve(cached)
       } else {
         queue.enqueue({url, resolve, reject})
@@ -45,7 +44,7 @@ const stream = async (url) => {
   })
 }
 
-const getstream = async (url, promise=null, redirCount=0) => {
+const getstream = (url, promise=null, redirCount=0) => {
   return new Promise((resolve, reject) => {
     if (promise) {
       resolve = promise.resolve 
@@ -63,7 +62,7 @@ const getstream = async (url, promise=null, redirCount=0) => {
       options.path = `${options.path}${url.search}`
     }
     const req = h.request(options, (res) => {
-      // console.log(res.statusCode, url.href)
+      console.log(res.statusCode, url.href)
       if (res.statusCode >= 300 && res.statusCode <= 399) {
         const location = res.headers.location
         if (location) {
