@@ -1,7 +1,7 @@
 'use strict'
 
 class HTTPError extends Error {
-  constructor(message) {
+  constructor(message, statusCode) {
     super(message)
     this.name = this.constructor.name
     Error.captureStackTrace(this, this.constructor);

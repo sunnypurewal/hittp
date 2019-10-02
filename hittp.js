@@ -52,7 +52,8 @@ const getstream = async (url, promise=null, redirCount=0) => {
       reject = promise.reject
     }
     if (redirCount > 10) {
-      reject(new HTTPError(`Too many redirects ${url.href}`))
+      // console.log(429, url.href)
+      reject(new HTTPError(`Too many redirects`, 429))
       return
     }
     const h = url.protocol.indexOf("https") != -1 ? https : http
@@ -62,11 +63,11 @@ const getstream = async (url, promise=null, redirCount=0) => {
       options.path = `${options.path}${url.search}`
     }
     const req = h.request(options, (res) => {
-      console.log(res.statusCode, url.href)
+      // console.log(res.statusCode, url.href)
       if (res.statusCode >= 300 && res.statusCode <= 399) {
         const location = res.headers.location
         if (location) {
-          console.log("Redirecting to ", location)
+          // console.log("Redirecting to ", location)
           const newurl = urlparse.parse(location)
           getstream(newurl, {resolve, reject}, redirCount+1)
           return
@@ -83,7 +84,8 @@ const getstream = async (url, promise=null, redirCount=0) => {
     })
     req.on("timeout", () => {
       req.abort()
-      reject(new HTTPError("Timeout"))
+      // console.log(408, url.href)
+      reject(new HTTPError("Timeout", 408))
       queue.respond(url)
     })
     req.on("error", (err) => {
