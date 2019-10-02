@@ -3,12 +3,17 @@
   "version": "0.1.0",
   "description": "Node.js HTTP request library with caching and queueing. Only supports GET.",
   "keywords": ["http", "get", "stream", "request"],
+  "homepage": "https://github.com/sunnypurewal/hittp",
+  "bugs":{"url": "https://github.com/sunnypurewal/hittp/issues",
+          "email": "sunnypurewal@gmail.com"},
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Sunny Purewal",
+  "author": "Sunny Purewal <sunnypurewal@gmail.com> (http://sunnypurewal.me)",
   "license": "ISC",
+  "repository": {"type": "git",
+                 "url": "github:sunnypurewal/hittp.git"},
   "dependencies": {
     "future": "^2.3.1"
   }

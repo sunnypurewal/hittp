@@ -18,7 +18,7 @@ class CacheStream extends stream.Duplex {
     this.future = null
   }
 
-  getFileDescriptor = () => {
+  getFileDescriptor() {
     if (!this.future) this.future = Future.create(this)
     else return this.future
     
@@ -32,7 +32,7 @@ class CacheStream extends stream.Duplex {
     return this.future
   }
 
-  getFilehandle = () => {
+  getFilehandle() {
     if (!this.future) this.future = Future.create(this)
     else return this.future
     cachepath.getWritablePath(this.url).then((filepath) => {
@@ -45,7 +45,7 @@ class CacheStream extends stream.Duplex {
     return this.future
   }
 
-  _read = (size) => {
+  _read(size) {
     this.getFileDescriptor().whenever((err, fd) => {
       fs.stat(this.filepath, (err, stats) => {
         size = Math.max(0, stats.size - this.readOffset)
@@ -60,7 +60,7 @@ class CacheStream extends stream.Duplex {
       })
     })
   }
-  _write = (chunk, encoding, callback) => {
+  _write(chunk, encoding, callback) {
     this.getFileDescriptor().whenever((err, fd) => {
       fs.stat(this.filepath, (err, stats) => {
         const size = Math.max(0, stats.size - this.readOffset)
@@ -72,7 +72,7 @@ class CacheStream extends stream.Duplex {
     })
   }
   
-  _final = (callback) => {
+  _final(callback) {
     this.getFileDescriptor().whenever((err, fd) => {
       fs.stat(this.filepath, (err, stats) => {
         const size = Math.max(0, stats.size - this.readOffset)
@@ -91,7 +91,7 @@ class CacheStream extends stream.Duplex {
     })
   }
 
-  _destroy = (err, callback) => {
+  _destroy(err, callback) {
     if (err) console.error("Destroying cachestream due to error", err)
     else {
       callback()
