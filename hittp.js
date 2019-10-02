@@ -8,12 +8,29 @@ const queue = require("./queue")
 const errors = require("./errors")
 
 const HTTPError = errors.HTTPError
+const TIMEOUT_MS = 3000
 
 cache.setPath("./.cache")
 
 queue.on("dequeue", (obj) => {
   getstream(obj.url, {resolve:obj.resolve,reject:obj.reject})
 })
+
+const get = (url) => {
+  return new Promise((resolve, reject) => {
+    stream(url).then((httpstream) => {
+      const chunks = []
+      httpstream.on("data", (chunk) => {
+        chunks.push(chunk)
+      })
+      httpstream.on("end", () => {
+        resolve(chunks.join(""))
+      })
+    }).catch((err) => {
+      reject(err)
+    })
+  })
+}
 
 const stream = async (url) => {
   return new Promise((resolve, reject) => {
@@ -40,17 +57,13 @@ const getstream = async (url, promise=null, redirCount=0) => {
     }
     const h = url.protocol.indexOf("https") != -1 ? https : http
     // console.log("http.stream ", url.href)
-    const options = {host:url.host, path:url.pathname,timeout:3000}
+    const options = {host:url.host, path:url.pathname,timeout:TIMEOUT_MS}
     if (url.search.length > 0) {
       options.path = `${options.path}${url.search}`
     }
     const req = h.request(options, (res) => {
-      console.log(res.statusCode, `${options.host}${options.path}`)
-      if (res.statusCode >= 200 && res.statusCode <= 299) {
-        const cachestream = new cache.CacheStream(url)
-        resolve(res.pipe(cachestream))
-        queue.respond(url)
-      } else if (res.statusCode >= 300 && res.statusCode <= 399) {
+      console.log(res.statusCode, url.href)
+      if (res.statusCode >= 300 && res.statusCode <= 399) {
         const location = res.headers.location
         if (location) {
           console.log("Redirecting to ", location)
@@ -58,6 +71,11 @@ const getstream = async (url, promise=null, redirCount=0) => {
           getstream(newurl, {resolve, reject}, redirCount+1)
           return
         }
+      }
+      if (res.statusCode >= 200 && res.statusCode <= 299) {
+        const cachestream = new cache.CacheStream(url)
+        resolve(res.pipe(cachestream))
+        queue.respond(url)
       } else {
         reject(new HTTPError(res.statusMessage))
         queue.respond(url)
@@ -78,5 +96,6 @@ const getstream = async (url, promise=null, redirCount=0) => {
 
 module.exports = {
   stream,
+  get,
   setCachePath: cache.setPath
 }

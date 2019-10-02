@@ -53,13 +53,14 @@ class CacheStream extends stream.Duplex {
         if (!this.fd) return
         fs.read(this.fd, buffer, 0, size, this.readOffset, (err, bytesRead, buf) => {
           if (bytesRead) {
-            let keepgoing = this.push(buffer)
+            this.push(buffer)
             this.readOffset += bytesRead
           }
         })
       })
     })
   }
+
   _write(chunk, encoding, callback) {
     this.getFileDescriptor().whenever((err, fd) => {
       fs.stat(this.filepath, (err, stats) => {
@@ -79,11 +80,12 @@ class CacheStream extends stream.Duplex {
         const buffer = Buffer.allocUnsafe(size)
         fs.read(this.fd, buffer, 0, size, this.readOffset, (err, bytesRead, buf) => {
           if (bytesRead) {
-            let keepgoing = this.push(buffer)
+            this.push(buffer)
             this.readOffset += bytesRead
           }
           fs.close(this.fd, (err) => {
             this.fd = null
+            this.push(null)
             callback(err)
           })
         })
