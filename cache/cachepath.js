@@ -9,11 +9,8 @@ const fsoptions = {recursive: true}
 
 let CACHE_PATH = "./.cache"
 
-const setPath = async (path, deleteExisting=true) => {
+const setPath = async (path) => {
   try {
-    if (deleteExisting) {
-      await fs.rmdir(CACHE_PATH)
-    }
     CACHE_PATH = path
     await fs.mkdir(CACHE_PATH, fsoptions)
   } catch (error) {
