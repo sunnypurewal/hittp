@@ -6,8 +6,9 @@ const cachepath = require("./cachepath")
 const Future = require('future')
 
 class CacheStream extends stream.Duplex {
-  constructor(url, options) {
+  constructor(url, cachePath, options) {
     super(options)
+    this.cachePath = cachePath
     this.url = url
     this.fd = null
     this.filepath = null
@@ -19,7 +20,7 @@ class CacheStream extends stream.Duplex {
     if (!this.future) this.future = Future.create(this)
     else return this.future
     
-    cachepath.getWritablePath(this.url).then((filepath) => {
+    cachepath.getWritablePath(this.url, this.cachePath).then((filepath) => {
       this.filepath = filepath
       fs.open(filepath, "w+", (err, fd) => {
         this.fd = fd

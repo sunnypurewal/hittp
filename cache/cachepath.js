@@ -4,23 +4,10 @@ const path = require("path")
 const fs = require("fs").promises
 const crypto = require('crypto')
 
-const fsoptions = {recursive: true}
-
-let CACHE_PATH = "./.cache"
-
-const setPath = async (path) => {
+const getWritablePath = async (url, cachePath) => {
+  const dir = getCacheDirname(url, cachePath)
   try {
-    CACHE_PATH = path
-    await fs.mkdir(CACHE_PATH, fsoptions)
-  } catch (error) {
-    throw error
-  }
-}
-
-const getWritablePath = async (url) => {
-  const dir = getCacheDirname(url)
-  try {
-    await fs.mkdir(dir, fsoptions)
+    await fs.mkdir(dir, {recursive: true})
     return path.join(dir, getCacheFilename(url))
   } catch (error) {
     console.error(error)
@@ -28,13 +15,13 @@ const getWritablePath = async (url) => {
   }
 }
 
-const getReadablePath = (url) => {
-  return path.join(getCacheDirname(url), getCacheFilename(url))
+const getReadablePath = (url, cachePath) => {
+  return path.join(getCacheDirname(url, cachePath), getCacheFilename(url))
 }
 
-const getCacheDirname = (url) => {
+const getCacheDirname = (url, cachePath) => {
   if (typeof(url) === "string") url = new URL(url)
-  return path.join(CACHE_PATH, url.host)
+  return path.join(cachePath, url.host)
 }
 
 const getCacheFilename = (url) => {
@@ -49,7 +36,5 @@ const getCacheFilename = (url) => {
 
 module.exports = {
   getWritablePath,
-  getReadablePath,
-  CACHE_PATH,
-  setPath
+  getReadablePath
 }

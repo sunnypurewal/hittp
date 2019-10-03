@@ -3,18 +3,8 @@ const events = require("events")
 const emitter = new events.EventEmitter()
 const queue = new Map()
 let requests = 0
-const DOMAIN_DELAY_S = 3
-const DOMAIN_DELAY_MS = DOMAIN_DELAY_S * 1000
-const MAX_CONNECTIONS = 5
-
-// setInterval(() => {
-//   let c = 0
-//   queue.forEach((value, key, map) => {
-//     c += value.count
-//   })
-//   console.log(`Queue has ${c} values for ${queue.size} hosts`)
-//   console.log("Requests count", requests)
-// }, 3000)
+let DOMAIN_DELAY_MS = 3000
+let MAX_CONNECTIONS = 50
 
 const on = (event, callback) => {
   if (event === "dequeue") {
@@ -77,5 +67,7 @@ const dequeue = (obj) => {
 module.exports = {
   enqueue,
   on,
-  respond
+  respond,
+  DOMAIN_DELAY_MS,
+  MAX_CONNECTIONS
 }

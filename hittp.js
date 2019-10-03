@@ -8,10 +8,13 @@ const queue = require("./queue")
 const errors = require("./errors")
 
 const HTTPError = errors.HTTPError
-const TIMEOUT_MS = 3000
+
+const defaultOptions = {
+  timeout: 3000
+}
 
 queue.on("dequeue", (obj) => {
-  getstream(obj.url, {resolve:obj.resolve,reject:obj.reject})
+  getstream(obj.url, {resolve:obj.resolve,reject:obj.reject}, obj.options)
 })
 
 const get = (url) => {
@@ -30,21 +33,21 @@ const get = (url) => {
   })
 }
 
-const stream = (url) => {
+const stream = (url, options=defaultOptions) => {
   return new Promise((resolve, reject) => {
     if (typeof(url) === "string") url = urlparse.parse(url)
-    cache.getstream(url).then((cached) => {
+    cache.readStream(url).then((cached) => {
       if (cached) {
         console.log("http.cached", url.href)
         resolve(cached)
       } else {
-        queue.enqueue({url, resolve, reject})
+        queue.enqueue({url, resolve, reject, options})
       }
     })
   })
 }
 
-const getstream = (url, promise=null, redirCount=0) => {
+const getstream = (url, promise=null, options, redirCount=0) => {
   return new Promise((resolve, reject) => {
     if (promise) {
       resolve = promise.resolve 
@@ -57,7 +60,8 @@ const getstream = (url, promise=null, redirCount=0) => {
     }
     const h = url.protocol.indexOf("https") != -1 ? https : http
     // console.log("http.stream ", url.href)
-    const options = {host:url.host, path:url.pathname,timeout:TIMEOUT_MS}
+    options.host = url.host
+    options.path = url.pathname
     if (url.search.length > 0) {
       options.path = `${options.path}${url.search}`
     }
@@ -73,8 +77,12 @@ const getstream = (url, promise=null, redirCount=0) => {
         }
       }
       if (res.statusCode >= 200 && res.statusCode <= 299) {
-        const cachestream = new cache.CacheStream(url)
-        resolve(res.pipe(cachestream))
+        const cachestream = cache.writeStream(url)
+        if (cachestream) {
+          resolve(res.pipe(cachestream))
+        } else {
+          resolve(res)
+        }
         queue.respond(url)
       } else {
         reject(new HTTPError(res.statusMessage))
@@ -95,8 +103,18 @@ const getstream = (url, promise=null, redirCount=0) => {
   })
 }
 
+const configure = (options) => {
+  if (options.delay_ms) {
+    queue.DOMAIN_DELAY_MS = options.delay_ms
+  }
+  if (options.maxConnections) {
+    queue.MAX_CONNECTIONS = options.maxConnections
+  }
+  cache.setPath(options.cachePath)
+}
+
 module.exports = {
   stream,
   get,
-  setCachePath: cache.setPath
+  configure
 }

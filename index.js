@@ -6,5 +6,5 @@ module.exports = {
   stream: hittp.stream,
   get: hittp.get,
   str2url: require("./urlparse").parse,
-  setCachePath: hittp.setCachePath
+  configure: hittp.configure
 }
