@@ -67,13 +67,13 @@ const getstream = (url, promise=null, options, redirCount=0) => {
       options.path = `${options.path}${url.search}`
     }
     const req = h.request(options, (res) => {
-      // console.log(res.statusCode, url.href)
+      console.log(res.statusCode, url.href)
       if (res.statusCode >= 300 && res.statusCode <= 399) {
         const location = res.headers.location
         if (location) {
-          // console.log("Redirecting to ", location)
+          console.log("Redirecting to ", location)
           const newurl = urlparse.parse(location)
-          getstream(newurl, {resolve, reject}, redirCount+1)
+          getstream(newurl, {resolve, reject}, options, redirCount+1)
           return
         }
       }
