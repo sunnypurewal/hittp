@@ -13,7 +13,7 @@ hittp.get("newyorktimes.com").then((html) => {
   // Do something with the html
 })
 /* OR */
-async getGoogle = () => {
+async getNYTimes = () => {
   const g = await hittp.get("newyorktimes.com")
   // Do something with the html
 }
