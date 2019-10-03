@@ -64,10 +64,18 @@ const dequeue = (obj) => {
   emitter.emit("dequeue", obj)
 }
 
+const configure = (options) => {
+  if (options.delay_ms) {
+    DOMAIN_DELAY_MS = options.delay_ms
+  }
+  if (options.maxConnections) {
+    MAX_CONNECTIONS = options.maxConnections
+  }
+}
+
 module.exports = {
   enqueue,
   on,
   respond,
-  DOMAIN_DELAY_MS,
-  MAX_CONNECTIONS
+  configure
 }

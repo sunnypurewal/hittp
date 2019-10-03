@@ -17,9 +17,9 @@ queue.on("dequeue", (obj) => {
   getstream(obj.url, {resolve:obj.resolve,reject:obj.reject}, obj.options)
 })
 
-const get = (url) => {
+const get = (url, options=defaultOptions) => {
   return new Promise((resolve, reject) => {
-    stream(url).then((httpstream) => {
+    stream(url, options).then((httpstream) => {
       const chunks = []
       httpstream.on("data", (chunk) => {
         chunks.push(chunk)
@@ -38,7 +38,7 @@ const stream = (url, options=defaultOptions) => {
     if (typeof(url) === "string") url = urlparse.parse(url)
     cache.readStream(url).then((cached) => {
       if (cached) {
-        console.log("http.cached", url.href)
+        // console.log("http.cached", url.href)
         resolve(cached)
       } else {
         queue.enqueue({url, resolve, reject, options})
@@ -62,11 +62,12 @@ const getstream = (url, promise=null, options, redirCount=0) => {
     // console.log("http.stream ", url.href)
     options.host = url.host
     options.path = url.pathname
+    options.timeout = options.timeout_ms
     if (url.search.length > 0) {
       options.path = `${options.path}${url.search}`
     }
     const req = h.request(options, (res) => {
-      console.log(res.statusCode, url.href)
+      // console.log(res.statusCode, url.href)
       if (res.statusCode >= 300 && res.statusCode <= 399) {
         const location = res.headers.location
         if (location) {
@@ -104,12 +105,7 @@ const getstream = (url, promise=null, options, redirCount=0) => {
 }
 
 const configure = (options) => {
-  if (options.delay_ms) {
-    queue.DOMAIN_DELAY_MS = options.delay_ms
-  }
-  if (options.maxConnections) {
-    queue.MAX_CONNECTIONS = options.maxConnections
-  }
+  queue.configure(options)
   cache.setPath(options.cachePath)
 }
 
