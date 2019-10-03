@@ -1,6 +1,6 @@
 {
   "name": "hittp",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Node.js HTTP request library with caching and queueing. Only supports GET.",
   "keywords": ["http", "get", "stream", "request"],
   "homepage": "https://github.com/sunnypurewal/hittp",

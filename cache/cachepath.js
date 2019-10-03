@@ -3,7 +3,6 @@
 const path = require("path")
 const fs = require("fs").promises
 const crypto = require('crypto')
-const str2url = require("../urlparse").str2url
 
 const fsoptions = {recursive: true}
 
@@ -35,7 +34,7 @@ const getReadablePath = (url) => {
 
 const getCacheDirname = (url) => {
   if (typeof(url) === "string") url = new URL(url)
-  return path.join(CACHE_PATH, url.origin)
+  return path.join(CACHE_PATH, url.host)
 }
 
 const getCacheFilename = (url) => {
