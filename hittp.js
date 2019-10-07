@@ -10,11 +10,14 @@ const errors = require("./errors")
 const HTTPError = errors.HTTPError
 
 const defaultOptions = {
-  timeout: 3000
+  timeout_ms: 3000
 }
 
 queue.on("dequeue", (obj) => {
-  getstream(obj.url, {resolve:obj.resolve,reject:obj.reject}, obj.options)
+  try {
+    getstream(obj.url, {resolve:obj.resolve,reject:obj.reject}, obj.options)
+  } catch (err) {
+  }
 })
 
 const get = (url, options=defaultOptions) => {
@@ -43,16 +46,18 @@ const stream = (url, options=defaultOptions) => {
       } else {
         queue.enqueue({url, resolve, reject, options})
       }
+    }).catch((err) => {
+      reject(err)
     })
   })
 }
 
-const getstream = (url, promise=null, options, redirCount=0) => {
-  return new Promise((resolve, reject) => {
-    if (promise) {
-      resolve = promise.resolve 
-      reject = promise.reject
-    }
+const getstream = (url, promise, options, redirCount=0) => {
+  // return new Promise((resolve, reject) => {
+    // if (promise) {
+    const resolve = promise.resolve 
+    const reject = promise.reject
+    // }
     if (redirCount > 10) {
       // console.log(429, url.href)
       reject(new HTTPError(`Too many redirects`, 429))
@@ -74,6 +79,7 @@ const getstream = (url, promise=null, options, redirCount=0) => {
           console.log("Redirecting to ", location)
           const newurl = urlparse.parse(location)
           getstream(newurl, {resolve, reject}, options, redirCount+1)
+          // .catch(err => console.log("Bubbled error"))
           return
         }
       }
@@ -86,7 +92,7 @@ const getstream = (url, promise=null, options, redirCount=0) => {
         }
         queue.respond(url)
       } else {
-        reject(new HTTPError(res.statusMessage))
+        reject(new HTTPError(res.statusMessage, res.statusCode))
         queue.respond(url)
       }
     })
@@ -101,7 +107,7 @@ const getstream = (url, promise=null, options, redirCount=0) => {
       queue.respond(url)
     })
     req.end()
-  })
+  // })
 }
 
 const configure = (options) => {
