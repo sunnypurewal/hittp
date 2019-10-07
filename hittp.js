@@ -80,7 +80,7 @@ const getstream = (url, promise, options, redirCount=0) => {
           const newurl = urlparse.parse(location)
           if (newurl) {
             getstream(newurl, {resolve, reject}, options, redirCount+1)
-            console.log("Redirecting to ", newurl.href)
+            // console.log("Redirecting to ", newurl.href)
           }
           return
         }
