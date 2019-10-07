@@ -38,10 +38,11 @@ const get = (url, options=defaultOptions) => {
 
 const stream = (url, options=defaultOptions) => {
   return new Promise((resolve, reject) => {
+    if (!url) reject(new HTTPError("Bad Request", 400))
     if (typeof(url) === "string") url = urlparse.parse(url)
     cache.readStream(url).then((cached) => {
       if (cached) {
-        // console.log("http.cached", url.href)
+        console.log(304, url.href)
         resolve(cached)
       } else {
         queue.enqueue({url, resolve, reject, options})
@@ -76,10 +77,11 @@ const getstream = (url, promise, options, redirCount=0) => {
       if (res.statusCode >= 300 && res.statusCode <= 399) {
         const location = res.headers.location
         if (location) {
-          console.log("Redirecting to ", location)
           const newurl = urlparse.parse(location)
-          getstream(newurl, {resolve, reject}, options, redirCount+1)
-          // .catch(err => console.log("Bubbled error"))
+          if (newurl) {
+            getstream(newurl, {resolve, reject}, options, redirCount+1)
+            console.log("Redirecting to ", newurl.href)
+          }
           return
         }
       }
