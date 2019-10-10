@@ -10,7 +10,8 @@ const errors = require("./errors")
 const HTTPError = errors.HTTPError
 
 const defaultOptions = {
-  timeout_ms: 3000
+  timeout_ms: 3000,
+  useCache: true
 }
 
 queue.on("dequeue", (obj) => {
@@ -40,16 +41,20 @@ const stream = (url, options=defaultOptions) => {
   return new Promise((resolve, reject) => {
     if (!url) reject(new HTTPError("Bad Request", 400))
     if (typeof(url) === "string") url = urlparse.parse(url)
-    cache.readStream(url).then((cached) => {
-      if (cached) {
-        console.log(304, url.href)
-        resolve(cached)
-      } else {
-        queue.enqueue({url, resolve, reject, options})
-      }
-    }).catch((err) => {
-      reject(err)
-    })
+    if (options.useCache) {
+      cache.readStream(url).then((cached) => {
+        if (cached) {
+          console.log(304, url.href)
+          resolve(cached)
+        } else {
+          queue.enqueue({url, resolve, reject, options})
+        }
+      }).catch((err) => {
+        reject(err)
+      })
+    } else {
+      queue.enqueue({url, resolve, reject, options})
+    }
   })
 }
 
@@ -60,7 +65,7 @@ const getstream = (url, promise, options, redirCount=0) => {
     const reject = promise.reject
     // }
     if (redirCount > 10) {
-      // console.log(429, url.href)
+      console.log(429, url.href)
       reject(new HTTPError(`Too many redirects`, 429))
       return
     }
@@ -80,9 +85,9 @@ const getstream = (url, promise, options, redirCount=0) => {
           const newurl = urlparse.parse(location)
           if (newurl) {
             getstream(newurl, {resolve, reject}, options, redirCount+1)
+            return
             // console.log("Redirecting to ", newurl.href)
           }
-          return
         }
       }
       if (res.statusCode >= 200 && res.statusCode <= 299) {
@@ -100,7 +105,7 @@ const getstream = (url, promise, options, redirCount=0) => {
     })
     req.on("timeout", () => {
       req.abort()
-      // console.log(408, url.href)
+      console.log(408, url.href)
       reject(new HTTPError("Timeout", 408))
       queue.respond(url)
     })

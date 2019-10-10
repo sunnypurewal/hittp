@@ -4,7 +4,7 @@ const emitter = new events.EventEmitter()
 const queue = new Map()
 let requests = 0
 let DOMAIN_DELAY_MS = 3000
-let MAX_CONNECTIONS = 50
+let MAX_CONNECTIONS = 2
 
 const on = (event, callback) => {
   if (event === "dequeue") {
