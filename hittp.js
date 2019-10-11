@@ -10,8 +10,7 @@ const errors = require("./errors")
 const HTTPError = errors.HTTPError
 
 const defaultOptions = {
-  timeout_ms: 3000,
-  useCache: true
+  timeout_ms: 3000
 }
 
 queue.on("dequeue", (obj) => {
@@ -41,20 +40,16 @@ const stream = (url, options=defaultOptions) => {
   return new Promise((resolve, reject) => {
     if (!url) reject(new HTTPError("Bad Request", 400))
     if (typeof(url) === "string") url = urlparse.parse(url)
-    if (options.useCache) {
-      cache.readStream(url).then((cached) => {
-        if (cached) {
-          console.log(304, url.href)
-          resolve(cached)
-        } else {
-          queue.enqueue({url, resolve, reject, options})
-        }
-      }).catch((err) => {
-        reject(err)
-      })
-    } else {
-      queue.enqueue({url, resolve, reject, options})
-    }
+    cache.readStream(url).then((cached) => {
+      if (cached) {
+        console.log(304, url.href)
+        resolve(cached)
+      } else {
+        queue.enqueue({url, resolve, reject, options})
+      }
+    }).catch((err) => {
+      reject(err)
+    })
   })
 }
 
