@@ -1,12 +1,17 @@
 {
   "name": "hittp",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "HTTP library specifically designed for crawling the web. Built-in caching and per-domain queueing",
   "keywords": [
     "http",
     "get",
     "stream",
-    "request"
+    "request",
+    "crawl",
+    "scrape",
+    "webcrawl",
+    "throttle",
+    "cache"
   ],
   "homepage": "https://github.com/sunnypurewal/hittp",
   "bugs": {
