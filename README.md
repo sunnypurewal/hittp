@@ -2,6 +2,8 @@
 
 hittp is an HTTP library specifically designed for crawling the web. It has built-in caching so that you don't hit the same webpage multiple times. It also has per-domain queueing which means multiple requests to the same host are delayed so that the server is not overloaded by your crawler.
 
+### See [crawlbot](https://www.npmjs.com/package/crawlbot) for an easy-to-use crawling library based on hittp
+
 `npm i hittp`
 
 ## Simple GET
