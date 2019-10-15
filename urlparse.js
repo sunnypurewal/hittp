@@ -4,6 +4,13 @@ const url = require("url")
 
 const parse = (string) => {
   if (!string) return null
+  if (typeof(string) !== "string") {
+    if (string.href) {
+      return string
+    } else {
+      return null
+    }
+  }
   if (!string.includes(".")) return null
   try {
     let protocol = "http"
