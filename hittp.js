@@ -87,7 +87,6 @@ const getstream = (url, promise, options, referrers=[]) => {
     if (res.statusCode >= 200 && res.statusCode <= 299) {
       const cachestream = cache.writeStream(url, referrers)
       if (cachestream) {
-        res.setEncoding("utf8")
         resolve(res.pipe(cachestream))
       } else {
         resolve(res)
