@@ -8,30 +8,39 @@ const urlparse = require("../urlparse")
 const getWritablePath = async (url, cachePath, referrers) => {
   return new Promise((resolve, reject) => {
     const dir = getCacheDirname(url, cachePath)
-    fs.access(dir).then(() => {
+    fs.mkdir(dir, {recursive:true}).then(() => {
       const writableFilename = getCacheFilename(url)
       const writablePath = path.join(dir, writableFilename)
       resolve(writablePath)
-      for (const r of referrers) {
-        const sympath = path.join(dir, getCacheFilename(r))
-        console.log(sympath)
-        fs.symlink(writableFilename, sympath).catch((err) => {})
-      }
-    }).catch((err) => {
-      fs.mkdir(dir, {recursive: true}).then(() => {
-        const writableFilename = getCacheFilename(url)
-        const writablePath = path.join(dir, writableFilename)
-        resolve(writablePath)
-        for (const r of referrers) {
-          const sympath = path.join(dir, getCacheFilename(r))
-          console.log(sympath)
-          fs.symlink(writableFilename, sympath).catch((err) => {})
-        }
-      }).catch((err) => {
-        reject(err)
-      })
+      buildSymLinks(writablePath, referrers, cachePath)
     })
   })
+}
+
+const buildSymLinks = (target, referrers, cachePath) => {
+  let paths = new Map()
+  const targetDir = path.dirname(target).split(path.sep).pop()
+  const targetBase = path.basename(target)
+  for (const r of referrers) {
+    let dirname = getCacheDirname(r, cachePath)
+    let filename = getCacheFilename(r)
+    let arr = paths.get(dirname) || []
+    arr.push(filename)
+    paths.set(dirname, arr)
+  }
+  for (const [dirname, filenames] of paths) {
+    if (dirname == targetDir) {
+      for (const filename of filenames) {
+        fs.symlink(targetBase, path.join(dirname, filename)).catch((err) => {})
+      }
+    } else {
+      fs.mkdir(dirname, {recursive: true}).then(() => {
+        for (const filename of filenames) {
+          fs.symlink(path.join("../", targetDir, targetBase), path.join(dirname, filename)).catch((err) => {})
+        }
+      })
+    }
+  }
 }
 
 const getReadablePath = (url, cachePath) => {

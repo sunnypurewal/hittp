@@ -23,10 +23,13 @@ class CacheStream extends stream.Duplex {
     
     cachepath.getWritablePath(this.url, this.cachePath, this.referrers).then((filepath) => {
       this.filepath = filepath
-      console.log("WRITABLE", filepath)
       fs.open(filepath, "w+", (err, fd) => {
-        this.fd = fd
-        this.future.deliver(null, fd)
+        if (err) {
+          console.error("FUTURE", err)
+        } else {
+          this.fd = fd
+          this.future.deliver(null, fd)
+        }
       })
     })
     return this.future
