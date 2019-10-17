@@ -1,5 +1,10 @@
 'use strict'
 
+const dnscache = require("dnscache")({
+  "enable": true,
+  "ttl": 300,
+  "cachesize": 1000
+})
 const http = require("http")
 const https = require("https")
 const cache = require("./cache/cache")
@@ -14,10 +19,7 @@ const defaultOptions = {
 }
 
 queue.on("dequeue", (obj) => {
-  try {
-    getstream(obj.url, {resolve:obj.resolve,reject:obj.reject}, obj.options)
-  } catch (err) {
-  }
+  getstream(obj.url, {resolve:obj.resolve,reject:obj.reject}, obj.options)
 })
 
 const get = (url, options=defaultOptions) => {
@@ -54,62 +56,58 @@ const stream = (url, options=defaultOptions) => {
 }
 
 const getstream = (url, promise, options, referrers=[]) => {
-  // return new Promise((resolve, reject) => {
-    // if (promise) {
-    const resolve = promise.resolve 
-    const reject = promise.reject
-    // }
-    if (referrers.length > 10) {
-      console.log(429, url.href)
-      reject(new HTTPError(`Too many redirects`, 429))
-      return
-    }
-    const h = url.protocol.indexOf("https") != -1 ? https : http
-    // console.log("http.stream ", url.href)
-    options.host = url.host
-    options.path = url.pathname
-    options.timeout = options.timeout_ms
-    if (url.search.length > 0) {
-      options.path = `${options.path}${url.search}`
-    }
-    const req = h.request(options, (res) => {
-      console.log(res.statusCode, url.href)
-      if (res.statusCode >= 300 && res.statusCode <= 399) {
-        const location = res.headers.location
-        if (location) {
-          const newurl = urlparse.parse(location)
-          if (newurl) {
-            referrers.push(url)
-            getstream(newurl, {resolve, reject}, options, referrers)
-            return
-            // console.log("Redirecting to ", newurl.href)
-          }
+  const resolve = promise.resolve 
+  const reject = promise.reject
+  if (referrers.length > 10) {
+    console.log(429, url.href)
+    reject(new HTTPError(`Too many redirects`, 429))
+    return
+  }
+  const h = url.protocol.indexOf("https") != -1 ? https : http
+  options.host = url.host
+  options.path = url.pathname
+  options.timeout = options.timeout_ms
+  if (url.search.length > 0) {
+    options.path = `${options.path}${url.search}`
+  }
+  const req = h.request(options, (res) => {
+    console.log(res.statusCode, url.href)
+    if (res.statusCode >= 300 && res.statusCode <= 399) {
+      const location = res.headers.location
+      if (location) {
+        const newurl = urlparse.parse(location)
+        if (newurl) {
+          referrers.push(url)
+          getstream(newurl, {resolve, reject}, options, referrers)
+          return
+          // console.log("Redirecting to ", newurl.href)
         }
       }
-      if (res.statusCode >= 200 && res.statusCode <= 299) {
-        const cachestream = cache.writeStream(url, referrers)
-        if (cachestream) {
-          resolve(res.pipe(cachestream))
-        } else {
-          resolve(res)
-        }
-        queue.respond(url)
+    }
+    if (res.statusCode >= 200 && res.statusCode <= 299) {
+      const cachestream = cache.writeStream(url, referrers)
+      if (cachestream) {
+        res.setEncoding("utf8")
+        resolve(res.pipe(cachestream))
       } else {
-        reject(new HTTPError(res.statusMessage, res.statusCode))
-        queue.respond(url)
+        resolve(res)
       }
-    })
-    req.on("timeout", () => {
-      req.abort()
-    //   reject(new HTTPError("Timeout", 408))
-    //   queue.respond(url)
-    })
-    req.on("error", (err) => {
-      reject(err)
       queue.respond(url)
-    })
-    req.end()
-  // })
+    } else {
+      reject(new HTTPError(res.statusMessage, res.statusCode))
+      queue.respond(url)
+    }
+  })
+  req.on("timeout", () => {
+    req.abort()
+    reject(new HTTPError("Timeout", 408))
+    queue.respond(url)
+  })
+  req.on("error", (err) => {
+    reject(err)
+    queue.respond(url)
+  })
+  req.end()
 }
 
 const configure = (options) => {

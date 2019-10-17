@@ -70,7 +70,6 @@ const hittp = require("hittp")
 // Defaults:
 hittp.configure({
   delay_ms: 3000,
-  maxConnections: 16,
   cachePath: "./.cache"
 })
 ```

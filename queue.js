@@ -4,7 +4,7 @@ const emitter = new events.EventEmitter()
 const queue = new Map()
 let requests = 0
 let DOMAIN_DELAY_MS = 3000
-let MAX_CONNECTIONS = 50
+let MAX_CONNECTIONS = 1
 
 const on = (event, callback) => {
   if (event === "dequeue") {
@@ -67,9 +67,6 @@ const dequeue = (obj) => {
 const configure = (options) => {
   if (options.delay_ms) {
     DOMAIN_DELAY_MS = options.delay_ms
-  }
-  if (options.maxConnections) {
-    MAX_CONNECTIONS = options.maxConnections
   }
 }
 
