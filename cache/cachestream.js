@@ -6,7 +6,7 @@ const cachepath = require("./cachepath")
 const Future = require('future')
 
 class CacheStream extends stream.Duplex {
-  constructor(url, cachePath, options) {
+  constructor(url, cachePath, referrers, options) {
     super(options)
     this.cachePath = cachePath
     this.url = url
@@ -14,14 +14,16 @@ class CacheStream extends stream.Duplex {
     this.filepath = null
     this.readOffset = 0
     this.future = null
+    this.referrers = referrers
   }
 
   getFileDescriptor() {
     if (!this.future) this.future = Future.create(this)
     else return this.future
     
-    cachepath.getWritablePath(this.url, this.cachePath).then((filepath) => {
+    cachepath.getWritablePath(this.url, this.cachePath, this.referrers).then((filepath) => {
       this.filepath = filepath
+      console.log("WRITABLE", filepath)
       fs.open(filepath, "w+", (err, fd) => {
         this.fd = fd
         this.future.deliver(null, fd)
@@ -48,11 +50,8 @@ class CacheStream extends stream.Duplex {
 
   _write(chunk, encoding, callback) {
     this.getFileDescriptor().whenever((err, fd) => {
-      fs.stat(this.filepath, (err, stats) => {
-        const size = Math.max(0, stats.size - this.readOffset)
-        fs.appendFile(this.fd, chunk, {encoding}, (err) => {
-          callback(err)
-        })
+      fs.appendFile(this.fd, chunk, {encoding}, (err) => {
+        callback(err)
       })
     })
   }

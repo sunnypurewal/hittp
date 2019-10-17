@@ -53,13 +53,13 @@ const stream = (url, options=defaultOptions) => {
   })
 }
 
-const getstream = (url, promise, options, redirCount=0) => {
+const getstream = (url, promise, options, referrers=[]) => {
   // return new Promise((resolve, reject) => {
     // if (promise) {
     const resolve = promise.resolve 
     const reject = promise.reject
     // }
-    if (redirCount > 10) {
+    if (referrers.length > 10) {
       console.log(429, url.href)
       reject(new HTTPError(`Too many redirects`, 429))
       return
@@ -79,14 +79,15 @@ const getstream = (url, promise, options, redirCount=0) => {
         if (location) {
           const newurl = urlparse.parse(location)
           if (newurl) {
-            getstream(newurl, {resolve, reject}, options, redirCount+1)
+            referrers.push(url)
+            getstream(newurl, {resolve, reject}, options, referrers)
             return
             // console.log("Redirecting to ", newurl.href)
           }
         }
       }
       if (res.statusCode >= 200 && res.statusCode <= 299) {
-        const cachestream = cache.writeStream(url)
+        const cachestream = cache.writeStream(url, referrers)
         if (cachestream) {
           resolve(res.pipe(cachestream))
         } else {
@@ -100,9 +101,8 @@ const getstream = (url, promise, options, redirCount=0) => {
     })
     req.on("timeout", () => {
       req.abort()
-      console.log(408, url.href)
-      reject(new HTTPError("Timeout", 408))
-      queue.respond(url)
+    //   reject(new HTTPError("Timeout", 408))
+    //   queue.respond(url)
     })
     req.on("error", (err) => {
       reject(err)

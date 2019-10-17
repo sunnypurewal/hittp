@@ -22,9 +22,9 @@ const readStream = (url) => {
   })
 }
 
-const writeStream = (url) => {
+const writeStream = (url, referrers=[]) => {
   if (!CACHE_PATH) return null
-  else return new cachestream.CacheStream(url, CACHE_PATH)
+  else return new cachestream.CacheStream(url, CACHE_PATH, referrers)
 }
 
 const setPath = async (path) => {
