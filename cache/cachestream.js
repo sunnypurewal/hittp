@@ -4,7 +4,11 @@ const fs = require("fs")
 const cachepath = require("./cachepath")
 
 class CacheStream extends stream.Transform {
-  constructor(url, cachePath, referrers, options) {
+  constructor(url, cachePath, encoding, referrers, options) {
+    options = options || {}
+    options.decodeStrings = false
+    options.encoding = encoding
+    options.defaultEncoding = encoding
     super(options)
     this.cachePath = cachePath
     this.url = url
@@ -15,10 +19,12 @@ class CacheStream extends stream.Transform {
 
   getWriteStream() {
     return new Promise((resolve, reject) => {
-      if (this.writeStream) resolve(this.writeStream)
+      if (this.writeStream) {
+        resolve(this.writeStream)
+      }
       else {
         cachepath.getWritablePath(this.url, this.cachePath, this.referrers).then((filepath) => {
-          this.writeStream = fs.createWriteStream(filepath)
+          this.writeStream = fs.createWriteStream(filepath, {encoding: this.readableEncoding})
           resolve(this.writeStream)
         })
       }
@@ -28,7 +34,7 @@ class CacheStream extends stream.Transform {
   _transform(chunk, enc, cb) {
     this.getWriteStream().then((writeStream) => {
       writeStream.write(chunk, enc)
-      this.push(chunk)
+      this.push(chunk, enc)
       cb()
     })
   }

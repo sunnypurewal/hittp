@@ -1,6 +1,6 @@
 {
   "name": "hittp",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "HTTP library specifically designed for crawling the web. Built-in caching and per-domain queueing",
   "keywords": [
     "http",
@@ -29,7 +29,6 @@
     "url": "github:sunnypurewal/hittp.git"
   },
   "dependencies": {
-    "dnscache": "^1.0.2",
-    "future": "^2.3.1"
+    "dnscache": "^1.0.2"
   }
 }

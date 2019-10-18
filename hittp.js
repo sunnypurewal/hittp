@@ -11,6 +11,7 @@ const cache = require("./cache/cache")
 const urlparse = require("./urlparse")
 const queue = require("./queue")
 const errors = require("./errors")
+const headers = require("./headers")
 
 const HTTPError = errors.HTTPError
 
@@ -43,14 +44,11 @@ const stream = (url, options=defaultOptions) => {
     if (!url) reject(new HTTPError("Bad Request", 400))
     if (typeof(url) === "string") url = urlparse.parse(url)
     cache.readStream(url).then((cached) => {
-      if (cached) {
-        console.log(304, url.href)
-        resolve(cached)
-      } else {
-        queue.enqueue({url, resolve, reject, options})
-      }
-    }).catch((err) => {
-      reject(err)
+      console.log(304, url.href)
+      resolve(cached)
+    }).catch((_) => {
+      //URL was not found in cache
+      queue.enqueue({url, resolve, reject, options})
     })
   })
 }
@@ -72,6 +70,8 @@ const getstream = (url, promise, options, referrers=[]) => {
   }
   const req = h.request(options, (res) => {
     console.log(res.statusCode, url.href)
+    const encoding = headers.getEncoding(res.headers)
+    res.setEncoding(encoding)
     if (res.statusCode >= 300 && res.statusCode <= 399) {
       const location = res.headers.location
       if (location) {
@@ -85,7 +85,7 @@ const getstream = (url, promise, options, referrers=[]) => {
       }
     }
     if (res.statusCode >= 200 && res.statusCode <= 299) {
-      const cachestream = cache.writeStream(url, referrers)
+      const cachestream = cache.writeStream(url, encoding, referrers)
       if (cachestream) {
         resolve(res.pipe(cachestream))
       } else {
