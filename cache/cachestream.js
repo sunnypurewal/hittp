@@ -15,6 +15,7 @@ class CacheStream extends stream.Duplex {
     this.readOffset = 0
     this.future = null
     this.referrers = referrers
+    this.buffer = null
   }
 
   getFileDescriptor() {
@@ -39,11 +40,14 @@ class CacheStream extends stream.Duplex {
     this.getFileDescriptor().whenever((err, fd) => {
       fs.stat(this.filepath, (err, stats) => {
         size = Math.max(0, stats.size - this.readOffset)
-        const buffer = Buffer.allocUnsafe(size)
+        if (!this.buffer || this.buffer.length < size) {
+          this.buffer = Buffer.allocUnsafe(size)
+        }
+        // const buffer = Buffer.allocUnsafe(size)
         if (!this.fd) return
-        fs.read(this.fd, buffer, 0, size, this.readOffset, (err, bytesRead, buf) => {
+        fs.read(this.fd, this.buffer, 0, size, this.readOffset, (err, bytesRead, buf) => {
           if (bytesRead) {
-            this.push(buffer)
+            this.push(this.buffer.slice(this.readOffset, this.readOffset+size))
             this.readOffset += bytesRead
           }
         })
@@ -63,10 +67,13 @@ class CacheStream extends stream.Duplex {
     this.getFileDescriptor().whenever((err, fd) => {
       fs.stat(this.filepath, (err, stats) => {
         const size = Math.max(0, stats.size - this.readOffset)
-        const buffer = Buffer.allocUnsafe(size)
-        fs.read(this.fd, buffer, 0, size, this.readOffset, (err, bytesRead, buf) => {
+        if (!this.buffer || this.buffer.length < size) {
+          this.buffer = Buffer.allocUnsafe(size)
+        }
+        // const buffer = Buffer.allocUnsafe(size)
+        fs.read(this.fd, this.buffer, 0, size, this.readOffset, (err, bytesRead, buf) => {
           if (bytesRead) {
-            this.push(buffer)
+            this.push(this.buffer.slice(this.readOffset, this.readOffset+size))
             this.readOffset += bytesRead
           }
           fs.close(this.fd, (err) => {
