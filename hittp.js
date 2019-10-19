@@ -16,22 +16,53 @@ const headers = require("./headers")
 const HTTPError = errors.HTTPError
 
 const defaultOptions = {
-  timeout_ms: 3000
+  timeout_ms: 3000,
+  encoded: true
 }
 
 queue.on("dequeue", (obj) => {
   getstream(obj.url, {resolve:obj.resolve,reject:obj.reject}, obj.options)
 })
 
+const head = (url, options=defaultOptions) => {
+  return new Promise((resolve, reject) => {
+    if (typeof(url) === "string") url = urlparse.parse(url)
+    const h = url.protocol.indexOf("https") != -1 ? https : http
+    options.host = url.host
+    options.path = url.pathname
+    options.timeout = options.timeout_ms
+    options.method = "HEAD"
+    if (url.search.length > 0) {
+      options.path = `${options.path}${url.search}`
+    }
+    const req = h.request(options, (res) => {
+      resolve(res.headers)
+    })
+    req.end()
+  })
+}
+
 const get = (url, options=defaultOptions) => {
   return new Promise((resolve, reject) => {
     stream(url, options).then((httpstream) => {
       const chunks = []
       httpstream.on("data", (chunk) => {
-        chunks.push(chunk)
+        if (options.buffer) {
+          console.log(chunk.length)
+          options.buffer.write(chunk.toString())
+        } else {
+          chunks.push(chunk)
+        }
+      })
+      httpstream.on("close", () => {
+        resolve(null)
       })
       httpstream.on("end", () => {
-        resolve(chunks.join(""))
+        if (options.buffer) {
+          // resolve(null)
+        } else {
+          resolve(chunks.join(""))
+        }
       })
     }).catch((err) => {
       reject(err)
@@ -117,5 +148,6 @@ const configure = (options) => {
 module.exports = {
   stream,
   get,
-  configure
+  configure,
+  head
 }
