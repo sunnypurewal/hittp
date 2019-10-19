@@ -70,8 +70,6 @@ const getstream = (url, promise, options, referrers=[]) => {
   }
   const req = h.request(options, (res) => {
     console.log(res.statusCode, url.href)
-    const encoding = headers.getEncoding(res.headers)
-    res.setEncoding(encoding)
     if (res.statusCode >= 300 && res.statusCode <= 399) {
       const location = res.headers.location
       if (location) {
@@ -85,7 +83,7 @@ const getstream = (url, promise, options, referrers=[]) => {
       }
     }
     if (res.statusCode >= 200 && res.statusCode <= 299) {
-      const cachestream = cache.writeStream(url, encoding, referrers)
+      const cachestream = cache.writeStream(url, referrers)
       if (cachestream) {
         resolve(res.pipe(cachestream))
       } else {
