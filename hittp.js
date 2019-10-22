@@ -17,8 +17,10 @@ const HTTPError = errors.HTTPError
 
 const defaultOptions = {
   timeout_ms: 3000,
-  encoded: true
+  decoded: true,
+  delay: false
 }
+let responses = new Map()
 
 queue.on("dequeue", (obj) => {
   getstream(obj.url, {resolve:obj.resolve,reject:obj.reject}, obj.options)
@@ -46,10 +48,11 @@ const get = (url, options=defaultOptions) => {
   return new Promise((resolve, reject) => {
     stream(url, options).then((httpstream) => {
       const chunks = []
+      let size = 0
       httpstream.on("data", (chunk) => {
         if (options.buffer) {
-          console.log(chunk.length)
-          options.buffer.write(chunk.toString())
+          options.buffer.fill(chunk, size, chunk.length+size)
+          size += chunk.length
         } else {
           chunks.push(chunk)
         }
@@ -59,9 +62,12 @@ const get = (url, options=defaultOptions) => {
       })
       httpstream.on("end", () => {
         if (options.buffer) {
-          // resolve(null)
-        } else {
+          resolve(size)
+        }
+        if (options.decoded) {
           resolve(chunks.join(""))
+        } else {
+          resolve(Buffer.concat(chunks))
         }
       })
     }).catch((err) => {
@@ -72,10 +78,10 @@ const get = (url, options=defaultOptions) => {
 
 const stream = (url, options=defaultOptions) => {
   return new Promise((resolve, reject) => {
-    if (!url) reject(new HTTPError("Bad Request", 400))
     if (typeof(url) === "string") url = urlparse.parse(url)
+    if (!url) reject(new HTTPError("Bad Request", 400))
     cache.readStream(url).then((cached) => {
-      console.log(304, url.href)
+      // console.log(304, url.href)
       resolve(cached)
     }).catch((_) => {
       //URL was not found in cache
@@ -101,8 +107,6 @@ const getstream = (url, promise, options, referrers=[]) => {
   }
   const req = h.request(options, (res) => {
     console.log(res.statusCode, url.href)
-    const encoding = headers.getEncoding(res.headers)
-    res.setEncoding(encoding)
     if (res.statusCode >= 300 && res.statusCode <= 399) {
       const location = res.headers.location
       if (location) {
@@ -116,26 +120,31 @@ const getstream = (url, promise, options, referrers=[]) => {
       }
     }
     if (res.statusCode >= 200 && res.statusCode <= 299) {
-      const cachestream = cache.writeStream(url, encoding, referrers)
+      const last = responses.get(url.host) 
+      const now = Date.now()
+      if (last && now-last < 3000) {
+        console.log("TOO MANY REQUESTS", url.host, now-last)
+      }
+      responses.set(url.host, Date.now())
+      queue.respond(url)
+      const cachestream = cache.writeStream(url, referrers)
       if (cachestream) {
         resolve(res.pipe(cachestream))
       } else {
         resolve(res)
       }
-      queue.respond(url)
     } else {
       reject(new HTTPError(res.statusMessage, res.statusCode))
-      queue.respond(url)
     }
   })
   req.on("timeout", () => {
+    queue.respond(url)
     req.abort()
     reject(new HTTPError("Timeout", 408))
-    queue.respond(url)
   })
   req.on("error", (err) => {
-    reject(err)
     queue.respond(url)
+    reject(err)
   })
   req.end()
 }

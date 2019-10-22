@@ -4,11 +4,9 @@ const fs = require("fs")
 const cachepath = require("./cachepath")
 
 class CacheStream extends stream.Transform {
-  constructor(url, cachePath, encoding, referrers, options) {
+  constructor(url, cachePath, referrers, options) {
     options = options || {}
     options.decodeStrings = false
-    options.encoding = encoding
-    options.defaultEncoding = encoding
     super(options)
     this.cachePath = cachePath
     this.url = url
@@ -24,7 +22,7 @@ class CacheStream extends stream.Transform {
       }
       else {
         cachepath.getWritablePath(this.url, this.cachePath, this.referrers).then((filepath) => {
-          this.writeStream = fs.createWriteStream(filepath, {encoding: this.readableEncoding})
+          this.writeStream = fs.createWriteStream(filepath)
           resolve(this.writeStream)
         })
       }

@@ -12,7 +12,7 @@ const readStream = (url) => {
     if (!CACHE_PATH) resolve(null)
     // console.log("Open getstream")
     const filepath = cachepath.getReadablePath(url, CACHE_PATH)
-    const stream = fs.createReadStream(filepath, {encoding: "utf8"})
+    const stream = fs.createReadStream(filepath)
     stream.on("ready", () => {
       resolve(stream)
     })
@@ -22,9 +22,9 @@ const readStream = (url) => {
   })
 }
 
-const writeStream = (url, encoding, referrers=[]) => {
+const writeStream = (url, referrers=[]) => {
   if (!CACHE_PATH) return null
-  else return new cachestream.CacheStream(url, CACHE_PATH, encoding, referrers)
+  else return new cachestream.CacheStream(url, CACHE_PATH, referrers)
 }
 
 const setPath = async (path) => {

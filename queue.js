@@ -4,7 +4,7 @@ const emitter = new events.EventEmitter()
 const queue = new Map()
 let requests = 0
 let DOMAIN_DELAY_MS = 3000
-let MAX_CONNECTIONS = 1
+let MAX_CONNECTIONS = 500
 
 const on = (event, callback) => {
   if (event === "dequeue") {
@@ -29,15 +29,15 @@ const enqueue = (obj) => {
   const lastdq = qobj.lastdq || 0
 
   if (lastdq > 0 && count === 0) {
-    // console.log("Enqueuing", url.host, "for", DOMAIN_DELAY_MS - (Date.now() - lastdq), "ms")
+    console.log("Enqueuing", url.host, "for", DOMAIN_DELAY_MS - (Date.now() - lastdq), "ms")
     setTimeout(() => {
       dequeue(obj)
     }, DOMAIN_DELAY_MS - (Date.now() - lastdq))
   } else {
-    // console.log("Enqueuing", url.host, "for", (count * DOMAIN_DELAY_MS), "ms")
+    console.log("Enqueuing", url.host, "for", (count * DOMAIN_DELAY_MS), "ms")
     setTimeout(() => {
       dequeue(obj)
-    }, DOMAIN_DELAY_MS * count)
+    }, DOMAIN_DELAY_MS * (count+1))
   }
   
   count += 1
