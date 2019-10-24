@@ -120,13 +120,6 @@ const getstream = (url, promise, options, referrers=[]) => {
       }
     }
     if (res.statusCode >= 200 && res.statusCode <= 299) {
-      const last = responses.get(url.host) 
-      const now = Date.now()
-      if (last && now-last < 3000) {
-        console.log("TOO MANY REQUESTS", url.host, now-last)
-      }
-      responses.set(url.host, Date.now())
-      queue.respond(url)
       const cachestream = cache.writeStream(url, referrers)
       if (cachestream) {
         resolve(res.pipe(cachestream))
