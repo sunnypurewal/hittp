@@ -28,7 +28,7 @@ queue.on("dequeue", (obj) => {
 
 const head = (url, options=defaultOptions) => {
   return new Promise((resolve, reject) => {
-    if (typeof(url) === "string") url = urlparse.parse(url)
+    if (typeof(url) === "string") url = urlparse(url)
     const h = url.protocol.indexOf("https") != -1 ? https : http
     options.host = url.host
     options.path = url.pathname
@@ -78,7 +78,7 @@ const get = (url, options=defaultOptions) => {
 
 const stream = (url, options=defaultOptions) => {
   return new Promise((resolve, reject) => {
-    if (typeof(url) === "string") url = urlparse.parse(url)
+    if (typeof(url) === "string") url = urlparse(url)
     if (!url) reject(new HTTPError("Bad Request", 400))
     cache.readStream(url).then((cached) => {
       // console.log(304, url.href)
@@ -110,7 +110,7 @@ const getstream = (url, promise, options, referrers=[]) => {
     if (res.statusCode >= 300 && res.statusCode <= 399) {
       const location = res.headers.location
       if (location) {
-        const newurl = urlparse.parse(location)
+        const newurl = urlparse(location)
         if (newurl) {
           referrers.push(url)
           getstream(newurl, {resolve, reject}, options, referrers)
