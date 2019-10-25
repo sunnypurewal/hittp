@@ -149,6 +149,10 @@ const getstream = (url, promise, options, referrers=[]) => {
   req.end()
 }
 
+const cancel = (url) => {
+  queue.cancel({url})
+}
+
 const configure = (options) => {
   queue.configure(options)
   cache.setPath(options.cachePath)
@@ -158,5 +162,6 @@ module.exports = {
   stream,
   get,
   configure,
-  head
+  head,
+  cancel
 }

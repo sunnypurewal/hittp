@@ -6,6 +6,7 @@ module.exports = {
   stream: hittp.stream,
   get: hittp.get,
   head: hittp.head,
+  cancel: hittp.cancel,
   str2url: require("./urlparse"),
   configure: hittp.configure
 }
