@@ -1,6 +1,6 @@
 {
   "name": "hittp",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "description": "HTTP library specifically designed for crawling the web. Built-in caching and per-domain queueing",
   "keywords": [
     "http",

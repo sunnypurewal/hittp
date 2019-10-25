@@ -74,14 +74,11 @@ const cancel = (obj) => {
   let qobj = queue.get(url.host)
   if (qobj) {
     allhandles.push(...(qobj.handles ? qobj.handles.slice() : []))
-    console.log(allhandles.length, "handles so far")
   }
   qobj = queue.get(`www.${url.host}`)
   if (qobj) {
     allhandles.push(...(qobj.handles ? qobj.handles.slice() : []))
-    console.log(allhandles.length, "handles so far")
   }
-  console.log("Cancelling", allhandles.length, "handles.")
   allhandles.forEach((h) => {
     clearTimeout(h)
   })
