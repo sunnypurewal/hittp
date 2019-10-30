@@ -16,7 +16,8 @@ const headers = require("./headers")
 const HTTPError = errors.HTTPError
 
 const defaultOptions = {
-  timeout_ms: 3000
+  timeout_ms: 3000,
+  cache: true
 }
 
 queue.on("dequeue", (obj) => {
@@ -43,13 +44,15 @@ const stream = (url, options=defaultOptions) => {
   return new Promise((resolve, reject) => {
     if (!url) reject(new HTTPError("Bad Request", 400))
     if (typeof(url) === "string") url = urlparse.parse(url)
-    cache.readStream(url).then((cached) => {
-      console.log(304, url.href)
-      resolve(cached)
-    }).catch((_) => {
-      //URL was not found in cache
-      queue.enqueue({url, resolve, reject, options})
-    })
+    if (options.cache) {
+      cache.readStream(url).then((cached) => {
+        console.log(304, url.href)
+        resolve(cached)
+      }).catch((_) => {
+        //URL was not found in cache
+        queue.enqueue({url, resolve, reject, options})
+      })
+    } else queue.enqueue({url, resolve, reject, options})
   })
 }
 
