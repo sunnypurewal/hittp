@@ -18,7 +18,8 @@ const HTTPError = errors.HTTPError
 const defaultOptions = {
   timeout_ms: 3000,
   decoded: true,
-  delay: false
+  delay: false,
+  cache: true
 }
 let responses = new Map()
 
@@ -80,13 +81,15 @@ const stream = (url, options=defaultOptions) => {
   return new Promise((resolve, reject) => {
     if (typeof(url) === "string") url = urlparse(url)
     if (!url) reject(new HTTPError("Bad Request", 400))
-    cache.readStream(url).then((cached) => {
-      // console.log(304, url.href)
-      resolve(cached)
-    }).catch((_) => {
-      //URL was not found in cache
-      queue.enqueue({url, resolve, reject, options})
-    })
+    if (options.cache) {
+      cache.readStream(url).then((cached) => {
+        // console.log(304, url.href)
+        resolve(cached)
+      }).catch((_) => {
+        //URL was not found in cache
+        queue.enqueue({url, resolve, reject, options})
+      })
+    } else queue.enqueue({url, resolve, reject, options})
   })
 }
 
