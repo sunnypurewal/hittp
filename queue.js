@@ -39,7 +39,7 @@ const enqueue = (obj) => {
     // console.log("Enqueuing", url.host, "for", (count * DOMAIN_DELAY_MS), "ms")
     handle = setTimeout(() => {
       dequeue(obj)
-    }, DOMAIN_DELAY_MS * (count+1))
+    }, DOMAIN_DELAY_MS * (count))
   }
   handles.push(handle)
   
