@@ -48,12 +48,12 @@ const getReadablePath = (url, cachePath) => {
 }
 
 const getCacheDirname = (url, cachePath) => {
-  if (typeof(url) === "string") url = urlparse.parse(url)
+  if (typeof(url) === "string") url = parse(url)
   return path.join(cachePath, url.host)
 }
 
 const getCacheFilename = (url) => {
-  if (typeof(url) === "string") url = urlparse.parse(url)
+  if (typeof(url) === "string") url = parse(url)
   const hash = crypto.createHash("sha256")
   hash.update(url.protocol)
   hash.update(url.pathname)

@@ -1,0 +1,16 @@
+const queue = require("./queue")
+const str2url = require("./urlparse")
+
+test("cancel", () => {
+  queue.enqueue({url: str2url("http://reuters.com")})
+  queue.enqueue({url: str2url("http://reuters.com/1")})
+  queue.enqueue({url: str2url("http://reuters.com/2")})
+  queue.enqueue({url: str2url("http://reuters.com/3")})
+  queue.enqueue({url: str2url("http://reuters.com/4")})
+  queue.enqueue({url: str2url("http://reuters.com/5")})
+  queue.enqueue({url: str2url("http://reuters.com/6")})
+  queue.enqueue({url: str2url("http://reuters.com/7")})
+  queue.enqueue({url: str2url("http://reuters.com/8")})
+  queue.enqueue({url: str2url("http://reuters.com/9")})
+  queue.cancel({url: str2url("http://reuters.com")})
+})

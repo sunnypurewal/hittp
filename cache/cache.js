@@ -9,7 +9,7 @@ let CACHE_PATH = "./.cache"
 
 const readStream = (url) => {
   return new Promise((resolve, reject) => {
-    if (!CACHE_PATH) resolve(null)
+    if (!CACHE_PATH) reject(new Error("You must set the cache path using hittp.configure({cachePath: './.cache'})"))
     // console.log("Open getstream")
     const filepath = cachepath.getReadablePath(url, CACHE_PATH)
     const stream = fs.createReadStream(filepath)

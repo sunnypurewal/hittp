@@ -43,6 +43,4 @@ const parse = (string) => {
   }
 }
 
-module.exports = {
-  parse: parse
-}
+module.exports = parse

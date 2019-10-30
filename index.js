@@ -5,6 +5,8 @@ const hittp = require("./hittp")
 module.exports = {
   stream: hittp.stream,
   get: hittp.get,
-  str2url: require("./urlparse").parse,
+  head: hittp.head,
+  cancel: hittp.cancel,
+  str2url: require("./urlparse"),
   configure: hittp.configure
 }
