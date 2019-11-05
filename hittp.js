@@ -16,10 +16,10 @@ const headers = require("./headers")
 const HTTPError = errors.HTTPError
 
 const defaultOptions = {
-  timeout_ms: 3000,
+  timeout_ms: 10000,
   decoded: true,
-  delay: false,
-  cache: true
+  delay_ms: 0,
+  cachePath: "./.cache"
 }
 let responses = new Map()
 
@@ -27,7 +27,8 @@ queue.on("dequeue", (obj) => {
   getstream(obj.url, {resolve:obj.resolve,reject:obj.reject}, obj.options)
 })
 
-const head = (url, options=defaultOptions) => {
+const head = (url, uoptions) => {
+  const options = Object.assign(defaultOptions, uoptions)
   return new Promise((resolve, reject) => {
     if (typeof(url) === "string") url = urlparse(url)
     const h = url.protocol.indexOf("https") != -1 ? https : http
@@ -45,7 +46,8 @@ const head = (url, options=defaultOptions) => {
   })
 }
 
-const get = (url, options=defaultOptions) => {
+const get = (url, options) => {
+  options = options || {}
   return new Promise((resolve, reject) => {
     stream(url, options).then((httpstream) => {
       const chunks = []
@@ -77,27 +79,28 @@ const get = (url, options=defaultOptions) => {
   })
 }
 
-const stream = (url, options=defaultOptions) => {
+const stream = (url, uoptions) => {
+  const options = Object.assign(defaultOptions, uoptions)
   return new Promise((resolve, reject) => {
     if (typeof(url) === "string") url = urlparse(url)
-    if (!url) reject(new HTTPError("Bad Request", 400))
-    if (options.cache) {
-      cache.readStream(url).then((cached) => {
-        // console.log(304, url.href)
-        resolve(cached)
-      }).catch((_) => {
-        //URL was not found in cache
-        queue.enqueue({url, resolve, reject, options})
+    if (!url) reject(new HTTPError("Invalid URL", 400))
+    if (options.cachePath) {
+      cache.readStream(options.cachePath, url, (cached, err) => {
+        if (err) queue.enqueue({url, resolve, reject, options})
+        else {
+          console.log(304, url.href)
+          resolve(cached)
+        }
       })
     } else queue.enqueue({url, resolve, reject, options})
   })
 }
 
 const getstream = (url, promise, options, referrers=[]) => {
-  const resolve = promise.resolve 
+  const resolve = promise.resolve
   const reject = promise.reject
   if (referrers.length > 10) {
-    console.log(429, url.href)
+    // console.log(429, url.href)
     reject(new HTTPError(`Too many redirects`, 429))
     return
   }
@@ -123,7 +126,7 @@ const getstream = (url, promise, options, referrers=[]) => {
       }
     }
     if (res.statusCode >= 200 && res.statusCode <= 299) {
-      const cachestream = cache.writeStream(url, referrers)
+      const cachestream = cache.writeStream(options.cachePath, url, referrers)
       if (cachestream) {
         resolve(res.pipe(cachestream))
       } else {
@@ -149,15 +152,9 @@ const cancel = (url) => {
   queue.cancel({url})
 }
 
-const configure = (options) => {
-  queue.configure(options)
-  cache.setPath(options.cachePath)
-}
-
 module.exports = {
   stream,
   get,
-  configure,
   head,
   cancel
 }

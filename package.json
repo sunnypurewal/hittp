@@ -29,6 +29,7 @@
     "url": "github:sunnypurewal/hittp.git"
   },
   "dependencies": {
+    "chalk": "^2.4.2",
     "dnscache": "^1.0.2"
   },
   "devDependencies": {

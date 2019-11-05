@@ -3,8 +3,7 @@ const events = require("events")
 const emitter = new events.EventEmitter()
 const queue = new Map()
 let requests = 0
-let DOMAIN_DELAY_MS = 3000
-let MAX_CONNECTIONS = 500
+let MAX_CONNECTIONS = 500 // Not sure if this works.
 
 const on = (event, callback) => {
   if (event === "dequeue") {
@@ -23,23 +22,28 @@ const respond = () => {
 }
 
 const enqueue = (obj) => {
+  if (obj.delay_ms === 0) {
+    dequeue(obj)
+    return
+  }
   const url = obj.url
   const qobj = queue.get(url.host) || {}
   let count = qobj.count || 0
   const lastdq = qobj.lastdq || 0
   let handles = qobj.handles || []
+  // console.log(`${handles.length} handles for ${url.host || url}`)
 
   let handle = null
   if (lastdq > 0 && count === 0) {
-    // console.log("Enqueuing", url.host, "for", DOMAIN_DELAY_MS - (Date.now() - lastdq), "ms")
+    // console.log("Enqueuing", url.host, "for", obj.options.delay_ms - (Date.now() - lastdq), "ms")
     handle = setTimeout(() => {
       dequeue(obj)
-    }, DOMAIN_DELAY_MS - (Date.now() - lastdq))
+    }, obj.options.delay_ms - (Date.now() - lastdq))
   } else {
-    // console.log("Enqueuing", url.host, "for", (count * DOMAIN_DELAY_MS), "ms")
+    // console.log("Enqueuing", url.host, "for", (count * obj.options.delay_ms), "ms")
     handle = setTimeout(() => {
       dequeue(obj)
-    }, DOMAIN_DELAY_MS * (count))
+    }, obj.options.delay_ms * (count))
   }
   handles.push(handle)
   
@@ -50,7 +54,6 @@ const enqueue = (obj) => {
 
 const dequeue = (obj) => {
   if (emitter.listenerCount("dequeue") === 0) {
-    enqueue(obj)
     return
   }
   if (requests > MAX_CONNECTIONS) {
@@ -84,16 +87,9 @@ const cancel = (obj) => {
   })
 }
 
-const configure = (options) => {
-  if (options.delay_ms) {
-    DOMAIN_DELAY_MS = options.delay_ms
-  }
-}
-
 module.exports = {
   enqueue,
   on,
   respond,
-  configure,
   cancel
 }

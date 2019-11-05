@@ -1,45 +1,28 @@
 'use strict'
 
 const fs = require("fs")
-const fspromises = fs.promises
 const cachepath = require("./cachepath")
 const cachestream = require("./cachestream")
 
-let CACHE_PATH = "./.cache"
-
-const readStream = (url) => {
-  return new Promise((resolve, reject) => {
-    if (!CACHE_PATH) reject(new Error("You must set the cache path using hittp.configure({cachePath: './.cache'})"))
+const readStream = (cachePath, url, callback) => {
+  if (!cachePath) return null
     // console.log("Open getstream")
-    const filepath = cachepath.getReadablePath(url, CACHE_PATH)
-    const stream = fs.createReadStream(filepath)
-    stream.on("ready", () => {
-      resolve(stream)
-    })
-    stream.on("error", (err) => {
-      reject(err)
-    })
+  const filepath = cachepath.getReadablePath(url, cachePath)
+  const stream = fs.createReadStream(filepath)
+  stream.on("ready", () => {
+    callback(stream)
+  })
+  stream.on("error", (err) => {
+    callback(null, err)
   })
 }
 
-const writeStream = (url, referrers=[]) => {
-  if (!CACHE_PATH) return null
-  else return new cachestream.CacheStream(url, CACHE_PATH, referrers)
-}
-
-const setPath = async (path) => {
-  try {
-    CACHE_PATH = path
-    if (CACHE_PATH) {
-      await fspromises.mkdir(CACHE_PATH, {recursive: true})
-    }
-  } catch (error) {
-    throw error
-  }
+const writeStream = (cachePath, url, referrers=[]) => {
+  if (!cachePath) return null
+  else return new cachestream.CacheStream(url, cachePath, referrers)
 }
 
 module.exports = {
   readStream,
-  writeStream,
-  setPath
+  writeStream
 }
