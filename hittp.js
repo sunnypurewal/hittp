@@ -47,13 +47,12 @@ const head = (url, uoptions) => {
 }
 
 const get = (url, options) => {
-  options = options || {}
   return new Promise((resolve, reject) => {
     stream(url, options).then((httpstream) => {
       const chunks = []
       let size = 0
       httpstream.on("data", (chunk) => {
-        if (options.buffer) {
+        if ((options || defaultOptions).buffer) {
           options.buffer.fill(chunk, size, chunk.length+size)
           size += chunk.length
         } else {
@@ -64,10 +63,10 @@ const get = (url, options) => {
         resolve(null)
       })
       httpstream.on("end", () => {
-        if (options.buffer) {
+        if ((options || defaultOptions).buffer) {
           resolve(size)
         }
-        if (options.decoded) {
+        if ((options || defaultOptions).decoded) {
           resolve(chunks.join(""))
         } else {
           resolve(Buffer.concat(chunks))
