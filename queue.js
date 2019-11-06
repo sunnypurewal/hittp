@@ -2,7 +2,7 @@
 const events = require("events")
 const emitter = new events.EventEmitter()
 const queue = new Map()
-let requests = 0
+let requests = new Map()
 let MAX_CONNECTIONS = 500 // Not sure if this works.
 
 const on = (event, callback) => {
@@ -22,33 +22,18 @@ const respond = () => {
 }
 
 const enqueue = (obj) => {
-  if (obj.delay_ms === 0) {
+  if (obj.options.delay_ms === 0) {
     dequeue(obj)
     return
   }
   const url = obj.url
   const qobj = queue.get(url.host) || {}
-  let count = qobj.count || 0
+  let queue = qobj.queue || []
   const lastdq = qobj.lastdq || 0
-  let handles = qobj.handles || []
-  // console.log(`${handles.length} handles for ${url.host || url}`)
 
-  let handle = null
-  if (lastdq > 0 && count === 0) {
-    // console.log("Enqueuing", url.host, "for", obj.options.delay_ms - (Date.now() - lastdq), "ms")
-    handle = setTimeout(() => {
-      dequeue(obj)
-    }, obj.options.delay_ms - (Date.now() - lastdq))
-  } else {
-    // console.log("Enqueuing", url.host, "for", (count * obj.options.delay_ms), "ms")
-    handle = setTimeout(() => {
-      dequeue(obj)
-    }, obj.options.delay_ms * (count))
-  }
-  handles.push(handle)
+  queue.push(obj)
   
-  count += 1
-  queue.set(url.host, {count, lastdq, handles})
+  queue.set(url.host, {queue, lastdq})
   emitter.emit("enqueued", obj)
 }
 
