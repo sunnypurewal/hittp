@@ -1,6 +1,6 @@
 {
   "name": "hittp",
-  "version": "0.5.8",
+  "version": "0.6.0",
   "description": "HTTP library specifically designed for crawling the web. Built-in caching and per-domain queueing",
   "keywords": [
     "http",
@@ -29,11 +29,10 @@
     "url": "github:sunnypurewal/hittp.git"
   },
   "dependencies": {
-    "chalk": "^2.4.2",
     "dnscache": "^1.0.2"
   },
   "devDependencies": {
-    "@types/jest": "^24.0.19",
+    "@types/jest": "^24.0.22",
     "jest": "^24.9.0"
   }
 }

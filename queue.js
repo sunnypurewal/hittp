@@ -22,54 +22,43 @@ const respond = () => {
 }
 
 const enqueue = (obj) => {
-  if (obj.options.delay_ms === 0) {
+  const url = obj.url
+  let reqs = requests.get(url.host) || []
+  if (reqs.length === 0 || obj.options.delay_ms === 0) {
     dequeue(obj)
     return
   }
-  const url = obj.url
   const qobj = queue.get(url.host) || {}
-  let queue = qobj.queue || []
+  let q = qobj.queue || []
   const lastdq = qobj.lastdq || 0
 
-  queue.push(obj)
-  
-  queue.set(url.host, {queue, lastdq})
-  emitter.emit("enqueued", obj)
+  q.push(obj)
+  queue.set(url.host, {queue:q, lastdq})
 }
 
 const dequeue = (obj) => {
-  if (emitter.listenerCount("dequeue") === 0) {
-    return
+  const url = obj.url
+  let reqs = requests.get(url.host) || []
+  const qobj = queue.get(obj.url.host) || {}
+  let q = qobj.queue || []
+  let lastdq = qobj.lastdq || 0
+  let now = Date.now()
+  if (now - lastdq < obj.options.delay_ms) {
+    setTimeout(() => {
+      emitter.emit("dequeue", obj)
+    }, obj.options.delay_ms - (now - lastdq))
+  } else {
+    process.nextTick(() => { emitter.emit("dequeue", obj) })
   }
-  if (requests > MAX_CONNECTIONS) {
-    enqueue(obj)
-    return
-  }
-  const qobj = queue.get(obj.url.host)
-  let count = qobj.count
-  let lastdq = qobj.lastdq
-  let handles = qobj.handles ? qobj.handles.slice(1) : []
-  count -= 1
-  requests += 1
   lastdq = Date.now()
-  queue.set(obj.url.host, {count, lastdq, handles})
-  emitter.emit("dequeue", obj)
+  queue.set(url.host, {queue:q, lastdq})
+  reqs.push(url)
+  requests.set(url.host, reqs)
 }
 
 const cancel = (obj) => {
   let url = new URL(obj.url.href)
-  const allhandles = []
-  let qobj = queue.get(url.host)
-  if (qobj) {
-    allhandles.push(...(qobj.handles ? qobj.handles.slice() : []))
-  }
-  qobj = queue.get(`www.${url.host}`)
-  if (qobj) {
-    allhandles.push(...(qobj.handles ? qobj.handles.slice() : []))
-  }
-  allhandles.forEach((h) => {
-    clearTimeout(h)
-  })
+  queue.set(url.host, [])
 }
 
 module.exports = {
