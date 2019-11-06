@@ -17,8 +17,18 @@ const on = (event, callback) => {
   }
 }
 
-const respond = () => {
-  requests = Math.max(0, requests-1)
+const respond = (url) => {
+  let reqs = requests.get(url.host) || []
+  let requrl = reqs.shift()
+  requests.set(url.host, reqs)
+  const qobj = queue.get(url.host) || {}
+  let q = qobj.queue || []
+  const lastdq = qobj.lastdq || 0
+  let next = q.shift()
+  if (next) {
+    dequeue(next)
+  }
+  queue.set(url.host, {queue:q, lastdq})
 }
 
 const enqueue = (obj) => {

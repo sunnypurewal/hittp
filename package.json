@@ -1,6 +1,6 @@
 {
   "name": "hittp",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "HTTP library specifically designed for crawling the web. Built-in caching and per-domain queueing",
   "keywords": [
     "http",
@@ -33,6 +33,7 @@
   },
   "devDependencies": {
     "@types/jest": "^24.0.22",
-    "jest": "^24.9.0"
+    "jest": "^24.9.0",
+    "jsdom": "^15.2.1"
   }
 }
