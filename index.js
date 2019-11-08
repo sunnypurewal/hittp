@@ -7,6 +7,5 @@ module.exports = {
   get: hittp.get,
   head: hittp.head,
   cancel: hittp.cancel,
-  str2url: require("./urlparse"),
-  configure: hittp.configure
+  str2url: require("./urlparse")
 }

@@ -19,7 +19,7 @@ const defaultOptions = {
   timeout_ms: 10000,
   decoded: true,
   delay_ms: 0,
-  cachePath: "./.cache"
+  cachePath: "./.hittp/cache"
 }
 let responses = new Map()
 
