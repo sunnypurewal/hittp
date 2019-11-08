@@ -67,12 +67,9 @@ const get = (url, uoptions) => {
         if ((options || defaultOptions).buffer) {
           resolve(size)
         }
-        console.log(options, defaultOptions)
         if ((options || defaultOptions).decoded) {
-          console.log("returning string")
           resolve(chunks.join(""))
         } else {
-          console.log("returning buffer")
           resolve(Buffer.concat(chunks))
         }
       })
