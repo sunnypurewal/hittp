@@ -49,7 +49,7 @@ const dequeue = (obj) => {
   const qobj = queue.get(obj.url.host)
   let lastdq = qobj.lastdq || 0
   let now = Date.now()
-  console.log(now-lastdq, obj.options.delay_ms)
+  // console.log(now-lastdq, obj.options.delay_ms)
   if (now - lastdq < obj.options.delay_ms) {
     setTimeout(() => {
       emitter.emit("dequeue", obj)
