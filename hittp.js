@@ -46,7 +46,8 @@ const head = (url, uoptions) => {
   })
 }
 
-const get = (url, options) => {
+const get = (url, uoptions) => {
+  const options = Object.assign(defaultOptions, uoptions)
   return new Promise((resolve, reject) => {
     stream(url, options).then((httpstream) => {
       const chunks = []
@@ -66,9 +67,12 @@ const get = (url, options) => {
         if ((options || defaultOptions).buffer) {
           resolve(size)
         }
+        console.log(options, defaultOptions)
         if ((options || defaultOptions).decoded) {
+          console.log("returning string")
           resolve(chunks.join(""))
         } else {
+          console.log("returning buffer")
           resolve(Buffer.concat(chunks))
         }
       })
