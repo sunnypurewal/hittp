@@ -111,7 +111,6 @@ const getstream = (url, promise, options, referrers=[]) => {
     options.path = `${options.path}${url.search}`
   }
   const req = h.request(options, (res) => {
-    queue.respond(url)
     console.log(res.statusCode, url.href)
     if (res.statusCode >= 300 && res.statusCode <= 399) {
       const location = res.headers.location
@@ -125,6 +124,7 @@ const getstream = (url, promise, options, referrers=[]) => {
         }
       }
     }
+    queue.respond(url)
     if (res.statusCode >= 200 && res.statusCode <= 299) {
       const cachestream = cache.writeStream(options.cachePath, url, referrers)
       if (cachestream) {
