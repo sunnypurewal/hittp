@@ -19,51 +19,45 @@ const on = (event, callback) => {
 
 const respond = (url) => {
   let reqs = requests.get(url.host) || []
-  let requrl = reqs.shift()
-  requests.set(url.host, reqs)
   const qobj = queue.get(url.host) || {}
   let q = qobj.queue || []
   const lastdq = qobj.lastdq || 0
   let next = q.shift()
+  queue.set(url.host, {queue:q, lastdq})
   if (next) {
+    reqs.push(next.url)
+    requests.set(next.url.host, [next.url])
     dequeue(next)
   }
-  queue.set(url.host, {queue:q, lastdq})
 }
 
 const enqueue = (obj) => {
   const url = obj.url
   let reqs = requests.get(url.host) || []
-  if (reqs.length === 0 || obj.options.delay_ms === 0) {
-    dequeue(obj)
-    return
-  }
   const qobj = queue.get(url.host) || {}
   let q = qobj.queue || []
   const lastdq = qobj.lastdq || 0
-
   q.push(obj)
   queue.set(url.host, {queue:q, lastdq})
+  if (q.length === 1 || obj.options.delay_ms === 0) {
+    dequeue(obj)
+  }
 }
 
 const dequeue = (obj) => {
   const url = obj.url
-  let reqs = requests.get(url.host) || []
-  const qobj = queue.get(obj.url.host) || {}
-  let q = qobj.queue || []
+  const qobj = queue.get(obj.url.host)
   let lastdq = qobj.lastdq || 0
   let now = Date.now()
+  console.log(now-lastdq, obj.options.delay_ms)
   if (now - lastdq < obj.options.delay_ms) {
     setTimeout(() => {
       emitter.emit("dequeue", obj)
     }, obj.options.delay_ms - (now - lastdq))
   } else {
-    process.nextTick(() => { emitter.emit("dequeue", obj) })
+    emitter.emit("dequeue", obj)
   }
-  lastdq = Date.now()
-  queue.set(url.host, {queue:q, lastdq})
-  reqs.push(url)
-  requests.set(url.host, reqs)
+  queue.set(url.host, Object.assign(qobj, {lastdq: now}))
 }
 
 const cancel = (obj) => {
