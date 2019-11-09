@@ -2,8 +2,7 @@
 const events = require("events")
 const emitter = new events.EventEmitter()
 const queue = new Map()
-const symlinks = new Map()
-let requests = new Map()
+const requests = new Map()
 let MAX_CONNECTIONS = 500 // Not sure if this works.
 
 const on = (event, callback) => {
@@ -18,46 +17,8 @@ const on = (event, callback) => {
   }
 }
 
-function isFunction(functionToCheck) {
-  return functionToCheck && {}.toString.call(functionToCheck) === '[object Function]';
- }
-
-const qget = (origin) => {
-  // console.log(origin, symlinks.has(origin))//, symlinks.get(origin), symlinks.get(origin).fn(symlinks.get(origin).origin))
-  let qobj = queue.get(origin)
-  if (!qobj && symlinks.has(origin)) {
-    qobj = symlinks.get(origin)
-    console.log("FN?", qobj)
-    while (qobj.fn) {
-      // console.log("LOOP", qobj)
-      qobj = qobj.fn(qobj.origin)
-    }
-  }
-  return qobj || {}
-}
-
-// const redirect = (fromurl, tourl) => {
-//   if (fromurl.origin == tourl.origin) return
-//   console.log("REDIRECT", fromurl.origin, tourl.origin)
-//   symlinks.set(tourl.origin, {
-//     fn: (origin) => {
-//       if (queue.has(origin)) {
-//         console.log("Queue has", origin)
-//         return queue.get(origin) 
-//       } else if (symlinks.has(origin)) {
-//         // console.log("Symlinks has", origin)
-//         return symlinks.get(origin)
-//       } else {
-//         console.log("No one has", origin)
-//       }
-//     },
-//     origin: tourl.origin
-//   })
-// }
-
 const respond = (url, referrers) => {
   // console.log("RESPOND", url.href)
-  let reqs = requests.get(url.origin) || []
   let qobj = queue.get(url.origin)
   if (!qobj) {
     for (const r of referrers) {
@@ -70,19 +31,18 @@ const respond = (url, referrers) => {
   let q = qobj.queue || []
   const lastdq = qobj.lastdq || 0
   const origin = qobj.origin || url.origin
-  let next = q.shift()
+  let last = q.shift()
   queue.set(url.origin, {queue:q, lastdq, origin})
-  if (next) {
-    reqs.push(next.url)
-    requests.set(next.url.origin, [next.url])
-    dequeue(next)
+  if (q[0]) {
+    dequeue(q[0])
   }
 }
 
 const enqueue = (obj) => {
+  // console.log("ENQUEUE", obj.url.href)
   const url = obj.url
   let reqs = requests.get(url.origin) || []
-  const qobj = qget(url.origin) || {}
+  const qobj = queue.get(url.origin) || {}
   let q = qobj.queue || []
   const lastdq = qobj.lastdq || 0
   for (const o of q) {
@@ -93,23 +53,30 @@ const enqueue = (obj) => {
   q.push(obj)
   queue.set(url.origin, {queue:q, lastdq, origin: url.origin})
   if (q.length === 1 || obj.options.delay_ms === 0) {
-    dequeue(obj)
+    process.nextTick( () => { dequeue(obj) })
   }
 }
 
 const dequeue = (obj) => {
+  // console.log("DEQUEUE", obj.url.href)
   const url = obj.url
-  const qobj = qget(obj.url.origin)
+  let reqs = requests.get(url.origin) || []
+  const qobj = queue.get(obj.url.origin)
   let lastdq = qobj.lastdq || 0
   let now = Date.now()
-  // console.log(now-lastdq, obj.options.delay_ms)
-  if (now - lastdq < obj.options.delay_ms) {
+  let timediff = now - lastdq
+  let delay_ms = obj.options.delay_ms
+  // console.log(timediff, delay_ms-timediff)
+  if (timediff < delay_ms) {
+    now += delay_ms - timediff
     setTimeout(() => {
       emitter.emit("dequeue", obj)
-    }, obj.options.delay_ms - (now - lastdq))
+    }, delay_ms - timediff)
   } else {
     emitter.emit("dequeue", obj)
   }
+  reqs.push(url)
+  requests.set(url.origin, reqs)
   queue.set(url.origin, Object.assign(qobj, {lastdq: now}))
 }
 

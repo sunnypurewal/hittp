@@ -11,7 +11,6 @@ const cache = require("./cache/cache")
 const urlparse = require("./urlparse")
 const queue = require("./queue")
 const errors = require("./errors")
-const headers = require("./headers")
 
 const HTTPError = errors.HTTPError
 
@@ -21,10 +20,10 @@ const defaultOptions = {
   delay_ms: 0,
   cachePath: "./.hittp/cache"
 }
-let responses = new Map()
 let info = () => {}
 let debug = () => {}
 let error = () => {}
+
 const setLogLevel = (level) => {
   if (level === "info") {
     info = console.log
@@ -110,7 +109,7 @@ const stream = (url, uoptions) => {
       cache.readStream(options.cachePath, url, (cached, err) => {
         if (err) queue.enqueue({url, resolve, reject, options})
         else {
-          info(304, url.href)
+          debug(304, url.href)
           resolve(cached)
         }
       })
@@ -134,13 +133,13 @@ const getstream = (url, promise, options, referrers=[]) => {
     options.path = `${options.path}${url.search}`
   }
   const req = h.request(options, (res) => {
-    info(res.statusCode, url.href)
     if (res.statusCode >= 300 && res.statusCode <= 399) {
       const location = res.headers.location
       if (location) {
         const newurl = urlparse(location) || urlparse(`${options.host}${location}`)
         if (newurl) {
           referrers.push(url)
+          info(res.statusCode, url.href, "->", newurl.href)
           getstream(newurl, {resolve, reject}, options, referrers)
           return
           // console.log("Redirecting to ", newurl.href)
@@ -148,6 +147,7 @@ const getstream = (url, promise, options, referrers=[]) => {
       }
     }
     queue.respond(url, referrers)
+    debug(res.statusCode, url.href)
     if (res.statusCode >= 200 && res.statusCode <= 299) {
       const cachestream = cache.writeStream(options.cachePath, url, referrers)
       if (cachestream) {
@@ -163,7 +163,7 @@ const getstream = (url, promise, options, referrers=[]) => {
     queue.respond(url, referrers)
     req.abort()
     let err = new HTTPError("Timeout", 408)
-    error(err)
+    info(408, url.href)
     reject(err)
   })
   req.on("error", (err) => {

@@ -2,8 +2,7 @@
 // wikipedia()
 
 const fs = require("fs")
-const str2url = require("./urlparse")
-const hittp = require("./hittp")
+const hittp = require("./index")
 
 function domainsFromFile(path) {
   let domains = fs.readFileSync(path)
@@ -11,14 +10,14 @@ function domainsFromFile(path) {
     return line.split("||")[0]
   })
   domains = domains.filter((d) => d.length > 0)
-  domains = domains.map((d) => str2url(d))
+  domains = domains.map((d) => hittp.str2url(d))
   return domains
 }
 
 let domains = domainsFromFile("./urlset")
 // const random = Math.floor(Math.random() * domains.length)
 // const domain = new URL(domains[random].href)
-hittp.setLogLevel("info")
+hittp.setLogLevel("debug")
 for (const domain of domains) {
   hittp.get(domain, { delay_ms: 3000 }).then((html) => {
     // console.log(html.length)
