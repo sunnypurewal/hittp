@@ -56,14 +56,13 @@ const qget = (origin) => {
 // }
 
 const respond = (url, referrers) => {
-  console.log("RESPOND", url.href)
+  // console.log("RESPOND", url.href)
   let reqs = requests.get(url.origin) || []
   let qobj = queue.get(url.origin)
   if (!qobj) {
     for (const r of referrers) {
       qobj = queue.get(r.origin)
       if (qobj) {
-        console.log("Eventually found the referrer", r.href, url.href)
         break
       }
     }

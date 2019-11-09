@@ -18,7 +18,7 @@ function domainsFromFile(path) {
 let domains = domainsFromFile("./urlset")
 // const random = Math.floor(Math.random() * domains.length)
 // const domain = new URL(domains[random].href)
-console.log("Visiting", domains.length, "domains")
+hittp.setLogLevel("info")
 for (const domain of domains) {
   hittp.get(domain, { delay_ms: 3000 }).then((html) => {
     // console.log(html.length)

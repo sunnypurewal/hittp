@@ -22,6 +22,28 @@ const defaultOptions = {
   cachePath: "./.hittp/cache"
 }
 let responses = new Map()
+let info = () => {}
+let debug = () => {}
+let error = () => {}
+const setLogLevel = (level) => {
+  if (level === "info") {
+    info = console.log
+    debug = console.log
+    error = console.error
+  } else if (level === "debug") {
+    info = () => {}
+    debug = console.log
+    error = console.error
+  } else if (level === "error") {
+    info = () => {}
+    debug = () => {}
+    error = console.error
+  } else {
+    info = () => {}
+    debug = () => {}
+    error = () => {}
+  }
+}
 
 queue.on("dequeue", (obj) => {
   getstream(obj.url, {resolve:obj.resolve,reject:obj.reject}, obj.options)
@@ -88,7 +110,7 @@ const stream = (url, uoptions) => {
       cache.readStream(options.cachePath, url, (cached, err) => {
         if (err) queue.enqueue({url, resolve, reject, options})
         else {
-          // console.log(304, url.href)
+          info(304, url.href)
           resolve(cached)
         }
       })
@@ -100,7 +122,7 @@ const getstream = (url, promise, options, referrers=[]) => {
   const resolve = promise.resolve
   const reject = promise.reject
   if (referrers.length > 10) {
-    // console.log(429, url.href)
+    info(429, url.href)
     reject(new HTTPError(`Too many redirects`, 429))
     return
   }
@@ -112,7 +134,7 @@ const getstream = (url, promise, options, referrers=[]) => {
     options.path = `${options.path}${url.search}`
   }
   const req = h.request(options, (res) => {
-    // console.log(res.statusCode, url.href)
+    info(res.statusCode, url.href)
     if (res.statusCode >= 300 && res.statusCode <= 399) {
       const location = res.headers.location
       if (location) {
@@ -140,9 +162,12 @@ const getstream = (url, promise, options, referrers=[]) => {
   req.on("timeout", () => {
     queue.respond(url, referrers)
     req.abort()
-    reject(new HTTPError("Timeout", 408))
+    let err = new HTTPError("Timeout", 408)
+    error(err)
+    reject(err)
   })
   req.on("error", (err) => {
+    error(err)
     queue.respond(url, referrers)
     reject(err)
   })
@@ -154,8 +179,9 @@ const cancel = (url) => {
 }
 
 module.exports = {
-  stream,
+  cancel,
   get,
   head,
-  cancel
+  setLogLevel,
+  stream,
 }

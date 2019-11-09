@@ -7,5 +7,6 @@ module.exports = {
   get: hittp.get,
   head: hittp.head,
   cancel: hittp.cancel,
-  str2url: require("./urlparse")
+  str2url: require("./urlparse"),
+  setLogLevel: hittp.setLogLevel
 }
