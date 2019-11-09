@@ -33,6 +33,7 @@
   },
   "devDependencies": {
     "@types/jest": "^24.0.22",
+    "@types/node": "^12.12.6",
     "jest": "^24.9.0",
     "jsdom": "^15.2.1"
   }

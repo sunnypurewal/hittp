@@ -88,7 +88,7 @@ const stream = (url, uoptions) => {
       cache.readStream(options.cachePath, url, (cached, err) => {
         if (err) queue.enqueue({url, resolve, reject, options})
         else {
-          console.log(304, url.href)
+          // console.log(304, url.href)
           resolve(cached)
         }
       })
@@ -112,11 +112,11 @@ const getstream = (url, promise, options, referrers=[]) => {
     options.path = `${options.path}${url.search}`
   }
   const req = h.request(options, (res) => {
-    console.log(res.statusCode, url.href)
+    // console.log(res.statusCode, url.href)
     if (res.statusCode >= 300 && res.statusCode <= 399) {
       const location = res.headers.location
       if (location) {
-        const newurl = urlparse(location)
+        const newurl = urlparse(location) || urlparse(`${options.host}${location}`)
         if (newurl) {
           referrers.push(url)
           getstream(newurl, {resolve, reject}, options, referrers)
@@ -125,7 +125,7 @@ const getstream = (url, promise, options, referrers=[]) => {
         }
       }
     }
-    queue.respond(url)
+    queue.respond(url, referrers)
     if (res.statusCode >= 200 && res.statusCode <= 299) {
       const cachestream = cache.writeStream(options.cachePath, url, referrers)
       if (cachestream) {
@@ -138,12 +138,12 @@ const getstream = (url, promise, options, referrers=[]) => {
     }
   })
   req.on("timeout", () => {
-    queue.respond(url)
+    queue.respond(url, referrers)
     req.abort()
     reject(new HTTPError("Timeout", 408))
   })
   req.on("error", (err) => {
-    queue.respond(url)
+    queue.respond(url, referrers)
     reject(err)
   })
   req.end()
