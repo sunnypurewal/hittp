@@ -62,7 +62,10 @@ const respond = (url, referrers) => {
   if (!qobj) {
     for (const r of referrers) {
       qobj = queue.get(r.origin)
-      if (qobj) break
+      if (qobj) {
+        console.log("Eventually found the referrer", r.href, url.href)
+        break
+      }
     }
   }
   let q = qobj.queue || []
