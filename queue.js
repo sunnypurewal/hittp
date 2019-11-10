@@ -14,6 +14,10 @@ const on = (event, callback) => {
     emitter.addListener("enqueued", (obj) => {
       callback(obj)
     })
+  } else if (event === "emptied") {
+    emitter.addListener("emptied", (origin) => {
+      callback(origin)
+    })
   }
 }
 
@@ -31,10 +35,12 @@ const respond = (url, referrers) => {
   let q = qobj.queue || []
   const lastdq = qobj.lastdq || 0
   const origin = qobj.origin || url.origin
-  let last = q.shift()
+  q.shift()
   queue.set(url.origin, {queue:q, lastdq, origin})
   if (q[0]) {
     dequeue(q[0])
+  } else {
+    emitter.emit("emptied", origin)
   }
 }
 

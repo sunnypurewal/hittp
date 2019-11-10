@@ -48,6 +48,10 @@ queue.on("dequeue", (obj) => {
   getstream(obj.url, {resolve:obj.resolve,reject:obj.reject}, obj.options)
 })
 
+const on = (event, callback) => {
+  queue.on(event, callback)
+}
+
 const head = (url, uoptions) => {
   const options = Object.assign(defaultOptions, uoptions)
   return new Promise((resolve, reject) => {
@@ -182,6 +186,7 @@ module.exports = {
   cancel,
   get,
   head,
+  on,
   setLogLevel,
   stream,
 }
