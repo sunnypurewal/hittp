@@ -39,8 +39,6 @@ const respond = (url, referrers) => {
   queue.set(url.origin, {queue:q, lastdq, origin})
   if (q[0]) {
     dequeue(q[0])
-  } else {
-    emitter.emit("emptied", origin, referrers)
   }
 }
 
