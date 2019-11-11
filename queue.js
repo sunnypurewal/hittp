@@ -40,7 +40,7 @@ const respond = (url, referrers) => {
   if (q[0]) {
     dequeue(q[0])
   } else {
-    emitter.emit("emptied", origin)
+    emitter.emit("emptied", origin, referrers)
   }
 }
 
