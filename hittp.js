@@ -77,8 +77,8 @@ const get = (url, uoptions) => {
     stream(url, options).then((httpstream) => {
       let url = null
       if (options.asJSON) {
-        httpstream = httpstream.stream
         url = httpstream.url
+        httpstream = httpstream.stream
       }
       const chunks = []
       let size = 0
@@ -96,14 +96,18 @@ const get = (url, uoptions) => {
       httpstream.on("end", () => {
         if ((options || defaultOptions).buffer) {
           resolve(size)
-          return
-        }
-        if ((options || defaultOptions).asJSON) {
-          resolve({stream:httpstream, url})
         } else if ((options || defaultOptions).decoded) {
-          resolve(chunks.join(""))
+          if ((options || defaultOptions).asJSON) {
+            resolve({html: chunks.join(""), url})
+          } else {
+            resolve(chunks.join(""))
+          }
         } else {
-          resolve(Buffer.concat(chunks))
+          if ((options || defaultOptions).asJSON) {
+            resolve({html: Buffer.concat(chunks), url})
+          } else {
+            resolve(Buffer.concat(chunks))
+          }
         }
       })
     }).catch((err) => {

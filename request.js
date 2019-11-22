@@ -21,6 +21,6 @@ function domainsFromFile(path) {
 let domain = "www.cnn.com"
 // for (const domain of domains) {
   hittp.get(domain, { delay_ms: 3000, asJSON: true }).then((html) => {
-    console.log(html)
+    console.log(html.url)
   })
 // }
