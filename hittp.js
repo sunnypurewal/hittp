@@ -75,6 +75,11 @@ const get = (url, uoptions) => {
   const options = Object.assign(defaultOptions, uoptions)
   return new Promise((resolve, reject) => {
     stream(url, options).then((httpstream) => {
+      let url = null
+      if (options.asJSON) {
+        httpstream = httpstream.stream
+        url = httpstream.url
+      }
       const chunks = []
       let size = 0
       httpstream.on("data", (chunk) => {
@@ -91,8 +96,11 @@ const get = (url, uoptions) => {
       httpstream.on("end", () => {
         if ((options || defaultOptions).buffer) {
           resolve(size)
+          return
         }
-        if ((options || defaultOptions).decoded) {
+        if ((options || defaultOptions).asJSON) {
+          resolve({stream:httpstream, url})
+        } else if ((options || defaultOptions).decoded) {
           resolve(chunks.join(""))
         } else {
           resolve(Buffer.concat(chunks))
@@ -114,7 +122,11 @@ const stream = (url, uoptions) => {
         if (err) queue.enqueue({url, resolve, reject, options})
         else {
           debug(304, url.href)
-          resolve(cached)
+          if (options.asJSON) {
+            resolve({stream:cached, url})
+          } else {
+            resolve(cached)
+          }
         }
       })
     } else queue.enqueue({url, resolve, reject, options})
@@ -154,11 +166,21 @@ const getstream = (url, promise, options, referrers=[]) => {
     debug(res.statusCode, url.href)
     if (res.statusCode >= 200 && res.statusCode <= 299) {
       const cachestream = cache.writeStream(options.cachePath, url, referrers)
+      let stream = null
       if (cachestream) {
-        resolve(res.pipe(cachestream))
+        stream = res.pipe(cachestream)
       } else {
-        resolve(res)
+        stream = res
       }
+      if (options.asJSON) {
+        resolve({stream, url})
+      } else {
+        resolve(stream)
+      }
+      res.on("error", (err) => {
+        error("HTTP response stream error", err.message)
+        cachestream.end()
+      })
     } else {
       reject(new HTTPError(res.statusMessage, res.statusCode))
     }

@@ -14,12 +14,13 @@ function domainsFromFile(path) {
   return domains
 }
 
-let domains = domainsFromFile("./urlset")
+// let domains = domainsFromFile("./urlset")
 // const random = Math.floor(Math.random() * domains.length)
 // const domain = new URL(domains[random].href)
-hittp.setLogLevel("debug")
-for (const domain of domains) {
-  hittp.get(domain, { delay_ms: 3000 }).then((html) => {
-    // console.log(html.length)
+// hittp.setLogLevel("debug")
+let domain = "www.cnn.com"
+// for (const domain of domains) {
+  hittp.get(domain, { delay_ms: 3000, asJSON: true }).then((html) => {
+    console.log(html)
   })
-}
+// }
