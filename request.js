@@ -18,7 +18,7 @@ function domainsFromFile(path) {
 // const random = Math.floor(Math.random() * domains.length)
 // const domain = new URL(domains[random].href)
 // hittp.setLogLevel("debug")
-let domain = "www.cnn.com"
+let domain = "cnn.com"
 // for (const domain of domains) {
   hittp.get(domain, { delay_ms: 3000, asJSON: true }).then((html) => {
     console.log(html.url)

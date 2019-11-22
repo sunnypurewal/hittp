@@ -7,13 +7,10 @@ const cachestream = require("./cachestream")
 const readStream = (cachePath, url, callback) => {
   if (!cachePath) return null
     // console.log("Open getstream")
-  const filepath = cachepath.getReadablePath(url, cachePath)
-  const stream = fs.createReadStream(filepath)
-  stream.on("ready", () => {
-    callback(stream)
-  })
-  stream.on("error", (err) => {
-    callback(null, err)
+  let filepath = cachepath.getReadablePath(url, cachePath)
+  fs.realpath(filepath, (err, resolvedPath) => {
+    if (err) callback(null, err)
+    else callback(fs.createReadStream(resolvedPath))
   })
 }
 
