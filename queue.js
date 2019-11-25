@@ -3,7 +3,8 @@ const events = require("events")
 const emitter = new events.EventEmitter()
 const queue = new Map()
 const requests = new Map()
-let MAX_CONNECTIONS = 500 // Not sure if this works.
+let numRequests = 0
+let MAX_CONNECTIONS = 1 // Not sure if this works.
 
 const on = (event, callback) => {
   if (event === "dequeue") {
@@ -23,11 +24,13 @@ const on = (event, callback) => {
 
 const respond = (url, referrers) => {
   // console.log("RESPOND", url.href)
+  let reqs = requests.get(url.origin)
   let qobj = queue.get(url.origin)
   if (!qobj) {
     for (const r of referrers) {
       qobj = queue.get(r.origin)
       if (qobj) {
+        reqs = requests.get(r.origin)
         break
       }
     }
@@ -35,6 +38,12 @@ const respond = (url, referrers) => {
   let q = qobj.queue || []
   const lastdq = qobj.lastdq || 0
   const origin = qobj.origin || url.origin
+  numRequests -= 1
+  console.log(numRequests)
+  if (numRequests >= MAX_CONNECTIONS) {
+    // Don't dequeue another one if we're maxed out
+    return
+  }
   q.shift()
   queue.set(url.origin, {queue:q, lastdq, origin})
   if (q[0]) {
@@ -45,7 +54,6 @@ const respond = (url, referrers) => {
 const enqueue = (obj) => {
   // console.log("ENQUEUE", obj.url.href)
   const url = obj.url
-  let reqs = requests.get(url.origin) || []
   const qobj = queue.get(url.origin) || {}
   let q = qobj.queue || []
   const lastdq = qobj.lastdq || 0
@@ -81,6 +89,7 @@ const dequeue = (obj) => {
   }
   reqs.push(url)
   requests.set(url.origin, reqs)
+  numRequests += 1
   queue.set(url.origin, Object.assign(qobj, {lastdq: now}))
 }
 

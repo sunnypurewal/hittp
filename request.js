@@ -20,7 +20,15 @@ function domainsFromFile(path) {
 // hittp.setLogLevel("debug")
 let domain = "cnn.com"
 // for (const domain of domains) {
-  hittp.get(domain, { delay_ms: 3000, asJSON: true }).then((html) => {
-    console.log(html.url)
+  let o1 = { delay_ms: 3000, asJSON: false }
+  hittp.get(domain, o1).then((html) => {
+    console.log(o1)
+    console.log(typeof(html))
+  })
+  console.log('in between')
+  let o2 = { delay_ms: 3000, asJSON: true }
+  hittp.get(domain, o2).then((html) => {
+    console.log(o2)
+    console.log(typeof(html))
   })
 // }

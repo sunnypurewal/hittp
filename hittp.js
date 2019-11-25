@@ -19,7 +19,8 @@ const defaultOptions = {
   timeout_ms: 10000,
   decoded: true,
   delay_ms: 0,
-  cachePath: "./.hittp/cache"
+  cachePath: "./.hittp/cache",
+  asJSON: false
 }
 let info = () => {}
 let debug = () => {}
@@ -54,8 +55,8 @@ const on = (event, callback) => {
 }
 
 const head = (url, uoptions) => {
-  const options = Object.assign(defaultOptions, uoptions)
   return new Promise((resolve, reject) => {
+    const options = Object.assign(defaultOptions, uoptions)
     if (typeof(url) === "string") url = urlparse(url)
     const h = url.protocol.indexOf("https") != -1 ? https : http
     options.host = url.host
@@ -72,9 +73,11 @@ const head = (url, uoptions) => {
   })
 }
 
-const get = (url, uoptions) => {
-  const options = Object.assign(defaultOptions, uoptions)
+function get(url, uoptions) {
+// const get = (url, uoptions) => {
   return new Promise((resolve, reject) => {
+    let options = Object.assign({}, defaultOptions)
+    options = Object.assign(options, uoptions)
     stream(url, options).then((httpstream) => {
       let url = null
       if (options.asJSON) {
@@ -84,7 +87,7 @@ const get = (url, uoptions) => {
       const chunks = []
       let size = 0
       httpstream.on("data", (chunk) => {
-        if ((options || defaultOptions).buffer) {
+        if (options.buffer) {
           options.buffer.fill(chunk, size, chunk.length+size)
           size += chunk.length
         } else {
@@ -95,16 +98,18 @@ const get = (url, uoptions) => {
         resolve(null)
       })
       httpstream.on("end", () => {
-        if ((options || defaultOptions).buffer) {
+        let decoded = options.decoded
+        let asJSON = options.asJSON
+        if (options.buffer) {
           resolve(size)
-        } else if ((options || defaultOptions).decoded) {
-          if ((options || defaultOptions).asJSON) {
+        } else if (decoded) {
+          if (asJSON) {
             resolve({html: chunks.join(""), url})
           } else {
             resolve(chunks.join(""))
           }
         } else {
-          if ((options || defaultOptions).asJSON) {
+          if (asJSON) {
             resolve({html: Buffer.concat(chunks), url})
           } else {
             resolve(Buffer.concat(chunks))
@@ -117,17 +122,20 @@ const get = (url, uoptions) => {
   })
 }
 
-const stream = (url, uoptions) => {
-  const options = Object.assign(defaultOptions, uoptions)
+function stream(url, uoptions) {
+// const stream = (url, uoptions) => {
   return new Promise((resolve, reject) => {
+    let options = Object.assign({}, defaultOptions)
+    options = Object.assign(options, uoptions)
     if (typeof(url) === "string") url = urlparse(url)
     if (!url) reject(new HTTPError("Invalid URL", 400))
     if (options.cachePath) {
       cache.readStream(options.cachePath, url, (cached, err) => {
+        // console.log(options, uoptions)
         if (err) queue.enqueue({url, resolve, reject, options})
         else {
           debug(304, url.href)
-          if (options.asJSON) {
+          if (uoptions.asJSON) {
             resolve({stream:cached, url})
           } else {
             resolve(cached)
@@ -199,7 +207,8 @@ const getstream = (purl, promise, options, referrers=[]) => {
     reject(err)
   })
   req.on("error", (err) => {
-    error(err, url.href)
+    error("ERROR", url.href, http.globalAgent.requests, https.globalAgent.requests)
+    // error(err, url.href)
     queue.respond(url, referrers)
     reject(err)
   })
