@@ -11,6 +11,7 @@ const cache = require("./cache/cache")
 const urlparse = require("./urlparse")
 const queue = require("./queue")
 const errors = require("./errors")
+const refercache = require('./cache/refercache')
 
 const HTTPError = errors.HTTPError
 
@@ -137,7 +138,7 @@ const stream = (url, uoptions) => {
   })
 }
 
-const getstream = (url, promise, options, referrers=[]) => {
+const getstream = (purl, promise, options, referrers=[]) => {
   const resolve = promise.resolve
   const reject = promise.reject
   if (referrers.length > 10) {
@@ -145,6 +146,7 @@ const getstream = (url, promise, options, referrers=[]) => {
     reject(new HTTPError(`Too many redirects`, 429))
     return
   }
+  let url = refercache.get(purl)
   const h = url.protocol.indexOf("https") != -1 ? https : http
   options.host = url.host
   options.path = url.pathname
@@ -153,6 +155,7 @@ const getstream = (url, promise, options, referrers=[]) => {
     options.path = `${options.path}${url.search}`
   }
   const req = h.request(options, (res) => {
+    debug(res.statusCode, url.href)
     if (res.statusCode >= 300 && res.statusCode <= 399) {
       const location = res.headers.location
       if (location) {
@@ -167,7 +170,6 @@ const getstream = (url, promise, options, referrers=[]) => {
       }
     }
     queue.respond(url, referrers)
-    debug(res.statusCode, url.href)
     if (res.statusCode >= 200 && res.statusCode <= 299) {
       const cachestream = cache.writeStream(options.cachePath, url, referrers)
       let stream = null
@@ -197,7 +199,7 @@ const getstream = (url, promise, options, referrers=[]) => {
     reject(err)
   })
   req.on("error", (err) => {
-    error(err)
+    error(err, url.href)
     queue.respond(url, referrers)
     reject(err)
   })
