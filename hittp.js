@@ -150,7 +150,7 @@ const getstream = (purl, promise, options, referrers=[]) => {
   const resolve = promise.resolve
   const reject = promise.reject
   if (referrers.length > 10) {
-    info(429, url.href)
+    info(429, purl.href)
     reject(new HTTPError(`Too many redirects`, 429))
     return
   }
@@ -179,6 +179,7 @@ const getstream = (purl, promise, options, referrers=[]) => {
     }
     queue.respond(url, referrers)
     if (res.statusCode >= 200 && res.statusCode <= 299) {
+      refercache.set(url, referrers)
       const cachestream = cache.writeStream(options.cachePath, url, referrers)
       let stream = null
       if (cachestream) {

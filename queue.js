@@ -4,7 +4,7 @@ const emitter = new events.EventEmitter()
 const queue = new Map()
 const requests = new Map()
 let numRequests = 0
-let MAX_CONNECTIONS = 1 // Not sure if this works.
+let MAX_CONNECTIONS = 100 // Not sure if this works.
 
 const on = (event, callback) => {
   if (event === "dequeue") {
@@ -39,7 +39,6 @@ const respond = (url, referrers) => {
   const lastdq = qobj.lastdq || 0
   const origin = qobj.origin || url.origin
   numRequests -= 1
-  console.log(numRequests)
   if (numRequests >= MAX_CONNECTIONS) {
     // Don't dequeue another one if we're maxed out
     return
@@ -64,7 +63,7 @@ const enqueue = (obj) => {
   }
   q.push(obj)
   queue.set(url.origin, {queue:q, lastdq, origin: url.origin})
-  if (q.length === 1 || obj.options.delay_ms === 0) {
+  if ((q.length === 1 || obj.options.delay_ms === 0) && numRequests < MAX_CONNECTIONS) {
     process.nextTick( () => { dequeue(obj) })
   }
 }
